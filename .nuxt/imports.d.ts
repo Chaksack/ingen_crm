@@ -35,6 +35,7 @@ export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
 export { defineShortcuts, ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../app/composables/defineShortcuts';
 export { useAppSettings } from '../app/composables/useAppSettings';
 export { useKanban } from '../app/composables/useKanban';
+export { useMailTemplates, MailSignature, MailLayout } from '../app/composables/useMailTemplates';
 export { _useShortcuts, useShortcuts } from '../app/composables/useShortcuts';
 export { cn, valueUpdater } from '../app/lib/utils';
 export { defineStore, acceptHMRUpdate, usePinia, storeToRefs } from '../node_modules/@pinia/nuxt/dist/runtime/composables';

@@ -258,6 +258,7 @@ declare global {
   const useLoadingIndicator: typeof import('../../node_modules/nuxt/dist/app/composables/loading-indicator').useLoadingIndicator
   const useLocalStorage: typeof import('@vueuse/core').useLocalStorage
   const useMagicKeys: typeof import('@vueuse/core').useMagicKeys
+  const useMailTemplates: typeof import('../../app/composables/useMailTemplates').useMailTemplates
   const useManualRefHistory: typeof import('@vueuse/core').useManualRefHistory
   const useMath: typeof import('@vueuse/math').useMath
   const useMax: typeof import('@vueuse/math').useMax
@@ -436,6 +437,9 @@ declare global {
   // @ts-ignore
   export type { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../app/composables/defineShortcuts'
   import('../../app/composables/defineShortcuts')
+  // @ts-ignore
+  export type { MailSignature, MailLayout } from '../../app/composables/useMailTemplates'
+  import('../../app/composables/useMailTemplates')
 }
 // for vue template auto import
 import { UnwrapRef } from 'vue'
@@ -698,6 +702,7 @@ declare module 'vue' {
     readonly useLoadingIndicator: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/loading-indicator')['useLoadingIndicator']>
     readonly useLocalStorage: UnwrapRef<typeof import('@vueuse/core')['useLocalStorage']>
     readonly useMagicKeys: UnwrapRef<typeof import('@vueuse/core')['useMagicKeys']>
+    readonly useMailTemplates: UnwrapRef<typeof import('../../app/composables/useMailTemplates')['useMailTemplates']>
     readonly useManualRefHistory: UnwrapRef<typeof import('@vueuse/core')['useManualRefHistory']>
     readonly useMath: UnwrapRef<typeof import('@vueuse/math')['useMath']>
     readonly useMax: UnwrapRef<typeof import('@vueuse/math')['useMax']>

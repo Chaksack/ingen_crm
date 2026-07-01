@@ -1,6 +1,7 @@
 declare global {
   const __buildAssetsURL: typeof import('../../node_modules/@nuxt/nitro-server/dist/runtime/utils/paths').buildAssetsURL
   const __publicAssetsURL: typeof import('../../node_modules/@nuxt/nitro-server/dist/runtime/utils/paths').publicAssetsURL
+  const addToInbox: typeof import('../../server/utils/inboxStore').addToInbox
   const appendCorsHeaders: typeof import('../../node_modules/h3').appendCorsHeaders
   const appendCorsPreflightHeaders: typeof import('../../node_modules/h3').appendCorsPreflightHeaders
   const appendHeader: typeof import('../../node_modules/h3').appendHeader
@@ -79,6 +80,7 @@ declare global {
   const isStream: typeof import('../../node_modules/h3').isStream
   const isWebResponse: typeof import('../../node_modules/h3').isWebResponse
   const lazyEventHandler: typeof import('../../node_modules/h3').lazyEventHandler
+  const listInbox: typeof import('../../server/utils/inboxStore').listInbox
   const nitroPlugin: typeof import('../../node_modules/nitropack/dist/runtime/internal/plugin').nitroPlugin
   const parseCookies: typeof import('../../node_modules/h3').parseCookies
   const promisifyNodeListener: typeof import('../../node_modules/h3').promisifyNodeListener
@@ -125,6 +127,12 @@ declare global {
   const useStorage: typeof import('../../node_modules/nitropack/dist/runtime/internal/storage').useStorage
   const writeEarlyHints: typeof import('../../node_modules/h3').writeEarlyHints
 }
+// for type re-export
+declare global {
+  // @ts-ignore
+  export type { InboxMailItem } from '../../server/utils/inboxStore'
+  import('../../server/utils/inboxStore')
+}
 export { useNitroApp } from 'nitropack/runtime/internal/app';
 export { useRuntimeConfig, useAppConfig } from 'nitropack/runtime/internal/config';
 export { defineNitroPlugin, nitroPlugin } from 'nitropack/runtime/internal/plugin';
@@ -139,3 +147,4 @@ export { defineNitroErrorHandler } from 'nitropack/runtime/internal/error/utils'
 export { appendCorsHeaders, appendCorsPreflightHeaders, appendHeader, appendHeaders, appendResponseHeader, appendResponseHeaders, assertMethod, callNodeListener, clearResponseHeaders, clearSession, createApp, createAppEventHandler, createError, createEvent, createEventStream, createRouter, defaultContentType, defineEventHandler, defineLazyEventHandler, defineNodeListener, defineNodeMiddleware, defineRequestMiddleware, defineResponseMiddleware, defineWebSocket, defineWebSocketHandler, deleteCookie, dynamicEventHandler, eventHandler, fetchWithEvent, fromNodeMiddleware, fromPlainHandler, fromWebHandler, getCookie, getHeader, getHeaders, getMethod, getProxyRequestHeaders, getQuery, getRequestFingerprint, getRequestHeader, getRequestHeaders, getRequestHost, getRequestIP, getRequestPath, getRequestProtocol, getRequestURL, getRequestWebStream, getResponseHeader, getResponseHeaders, getResponseStatus, getResponseStatusText, getRouterParam, getRouterParams, getSession, getValidatedQuery, getValidatedRouterParams, handleCacheHeaders, handleCors, isCorsOriginAllowed, isError, isEvent, isEventHandler, isMethod, isPreflightRequest, isStream, isWebResponse, lazyEventHandler, parseCookies, promisifyNodeListener, proxyRequest, readBody, readFormData, readMultipartFormData, readRawBody, readValidatedBody, removeResponseHeader, sanitizeStatusCode, sanitizeStatusMessage, sealSession, send, sendError, sendIterable, sendNoContent, sendProxy, sendRedirect, sendStream, sendWebResponse, serveStatic, setCookie, setHeader, setHeaders, setResponseHeader, setResponseHeaders, setResponseStatus, splitCookiesString, toEventHandler, toNodeListener, toPlainHandler, toWebHandler, toWebRequest, unsealSession, updateSession, useBase, useSession, writeEarlyHints } from 'h3';
 export { buildAssetsURL as __buildAssetsURL, publicAssetsURL as __publicAssetsURL } from '/Users/andrewchakdahah/Documents/ingen_crm/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths';
 export { defineAppConfig } from '/Users/andrewchakdahah/Documents/ingen_crm/node_modules/@nuxt/nitro-server/dist/runtime/utils/config';
+export { addToInbox, listInbox } from '/Users/andrewchakdahah/Documents/ingen_crm/server/utils/inboxStore';

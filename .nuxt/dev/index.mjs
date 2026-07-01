@@ -5,6 +5,7 @@ import { resolve, dirname, join } from 'node:path';
 import nodeCrypto from 'node:crypto';
 import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///Users/andrewchakdahah/Documents/ingen_crm/node_modules/@vue/shared/dist/shared.cjs.js';
+import { Resend } from 'file:///Users/andrewchakdahah/Documents/ingen_crm/node_modules/resend/dist/index.mjs';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///Users/andrewchakdahah/Documents/ingen_crm/node_modules/vue-bundle-renderer/dist/runtime.mjs';
 import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, joinRelativeURL } from 'file:///Users/andrewchakdahah/Documents/ingen_crm/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///Users/andrewchakdahah/Documents/ingen_crm/node_modules/destr/dist/index.mjs';
@@ -2196,6 +2197,9 @@ async function runTask(name, {
   }
 }
 
+function addToInbox(item) {
+}
+
 const warnOnceSet = /* @__PURE__ */ new Set();
 const DEFAULT_ENDPOINT = "https://api.iconify.design";
 const _mJEIVx = defineCachedEventHandler(async (event) => {
@@ -2256,10 +2260,18 @@ const _mJEIVx = defineCachedEventHandler(async (event) => {
   // 1 week
 });
 
+const _lazy_kT1m8B = () => Promise.resolve().then(function () { return inbound_post$1; });
+const _lazy_0X1OgF = () => Promise.resolve().then(function () { return inbox_get$1; });
+const _lazy_vNgQjx = () => Promise.resolve().then(function () { return send_post$1; });
+const _lazy_CSihPc = () => Promise.resolve().then(function () { return sent_get$1; });
 const _lazy_B1rhgE = () => Promise.resolve().then(function () { return renderer$1; });
 
 const handlers = [
   { route: '', handler: _e1r5lx, lazy: false, middleware: true, method: undefined },
+  { route: '/api/email/inbound', handler: _lazy_kT1m8B, lazy: true, middleware: false, method: "post" },
+  { route: '/api/email/inbox', handler: _lazy_0X1OgF, lazy: true, middleware: false, method: "get" },
+  { route: '/api/email/send', handler: _lazy_vNgQjx, lazy: true, middleware: false, method: "post" },
+  { route: '/api/email/sent', handler: _lazy_CSihPc, lazy: true, middleware: false, method: "get" },
   { route: '/__nuxt_error', handler: _lazy_B1rhgE, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: _SxA8c9, lazy: false, middleware: false, method: undefined },
   { route: '/api/_nuxt_icon/:collection', handler: _mJEIVx, lazy: false, middleware: false, method: undefined },
@@ -2517,6 +2529,195 @@ const styles = {};
 const styles$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: styles
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function parseInboundBody(body) {
+  var _a, _b, _c, _d, _e, _f, _g;
+  const id = (body == null ? void 0 : body.id) || ((_a = body == null ? void 0 : body.email) == null ? void 0 : _a.id) || crypto.randomUUID();
+  const from = (body == null ? void 0 : body.from) || (body == null ? void 0 : body.sender) || ((_b = body == null ? void 0 : body.email) == null ? void 0 : _b.from) || "";
+  const subject = (body == null ? void 0 : body.subject) || ((_c = body == null ? void 0 : body.email) == null ? void 0 : _c.subject) || "";
+  const text = (body == null ? void 0 : body.text) || (body == null ? void 0 : body.html) || ((_d = body == null ? void 0 : body.email) == null ? void 0 : _d.text) || "";
+  const date = (body == null ? void 0 : body.date) || (body == null ? void 0 : body.created_at) || (/* @__PURE__ */ new Date()).toISOString();
+  const name = ((_f = (_e = from == null ? void 0 : from.split("<")[0]) == null ? void 0 : _e.trim()) == null ? void 0 : _f.replace(/\s+<$/, "")) || (from || "Unknown");
+  const email = ((_g = from == null ? void 0 : from.match(/<([^>]+)>/)) == null ? void 0 : _g[1]) || from || "unknown@unknown";
+  return {
+    id,
+    name,
+    email,
+    subject: subject || "(no subject)",
+    text: typeof text === "string" ? text : JSON.stringify(text != null ? text : ""),
+    date,
+    read: false,
+    labels: ["inbox"]
+  };
+}
+const inbound_post = defineEventHandler(async (event) => {
+  try {
+    const body = await readBody(event);
+    const item = parseInboundBody(body);
+    addToInbox(item);
+    return { ok: true };
+  } catch (err) {
+    console.error("inbound.post error", err);
+    throw createError({ statusCode: 400, statusMessage: "Invalid inbound payload" });
+  }
+});
+
+const inbound_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: inbound_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function toMail$1(item) {
+  var _a, _b, _c;
+  const from = item.from || (item == null ? void 0 : item.from_address) || "";
+  const subject = item.subject || "";
+  const text = item.text || item.html || "";
+  const date = item.created_at || item.date || (/* @__PURE__ */ new Date()).toISOString();
+  const id = item.id || crypto.randomUUID();
+  return {
+    id,
+    name: ((_b = (_a = from == null ? void 0 : from.split("<")[0]) == null ? void 0 : _a.trim()) == null ? void 0 : _b.replace(/\s+<$/, "")) || (from || "Unknown"),
+    email: ((_c = from.match(/<([^>]+)>/)) == null ? void 0 : _c[1]) || from || "unknown@unknown",
+    subject,
+    text: typeof text === "string" ? text : "",
+    date,
+    read: false,
+    labels: ["inbox"]
+  };
+}
+const inbox_get = defineEventHandler(async (event) => {
+  var _a;
+  try {
+    const RESEND_API_KEY = process.env.resend_api_key || process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) {
+      return {
+        ok: false,
+        message: "Missing RESEND_API_KEY. Set RESEND_API_KEY in your environment to fetch Inbox messages from Resend.",
+        mails: []
+      };
+    }
+    const resend = new Resend(RESEND_API_KEY);
+    let mails = [];
+    const maybeList = (_a = resend == null ? void 0 : resend.emails) == null ? void 0 : _a.list;
+    if (typeof maybeList === "function") {
+      try {
+        const res = await maybeList.call(resend.emails, { limit: 50 });
+        const items = Array.isArray(res == null ? void 0 : res.data) ? res.data : Array.isArray(res) ? res : [];
+        mails = items.map(toMail$1);
+      } catch (e) {
+      }
+    }
+    return {
+      ok: true,
+      mails,
+      note: mails.length ? void 0 : "No Inbox emails retrieved from Resend. Ensure your account/SDK supports listing or configure Inbound Route to POST to /api/email/inbound."
+    };
+  } catch (err) {
+    console.error("inbox.get error", err);
+    return { ok: false, mails: [], message: "Failed to retrieve Inbox emails from Resend." };
+  }
+});
+
+const inbox_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: inbox_get
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const send_post = defineEventHandler(async (event) => {
+  try {
+    const body = await readBody(event);
+    const RESEND_API_KEY = process.env.resend_api_key || process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) {
+      throw createError({ statusCode: 500, statusMessage: "Missing RESEND API key" });
+    }
+    const resend = new Resend(RESEND_API_KEY);
+    if (!(body == null ? void 0 : body.to) || !(body == null ? void 0 : body.subject) || !(body == null ? void 0 : body.html)) {
+      throw createError({ statusCode: 400, statusMessage: "to, subject and html are required" });
+    }
+    const to = Array.isArray(body.to) ? body.to : body.to.split(",").map((s) => s.trim()).filter(Boolean);
+    const cc = body.cc ? Array.isArray(body.cc) ? body.cc : body.cc.split(",").map((s) => s.trim()).filter(Boolean) : void 0;
+    const bcc = body.bcc ? Array.isArray(body.bcc) ? body.bcc : body.bcc.split(",").map((s) => s.trim()).filter(Boolean) : void 0;
+    const from = body.from || "Ingen CRM <onboarding@resend.dev>";
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      cc,
+      bcc,
+      subject: body.subject,
+      html: body.html
+    });
+    if (error) {
+      throw createError({ statusCode: 500, statusMessage: error.message || "Failed to send email" });
+    }
+    return { ok: true, id: data == null ? void 0 : data.id };
+  } catch (err) {
+    console.error("Resend send error", err);
+    if (err == null ? void 0 : err.statusCode) throw err;
+    throw createError({ statusCode: 500, statusMessage: "Internal Server Error" });
+  }
+});
+
+const send_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: send_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function toMail(item) {
+  var _a, _b, _c;
+  const from = item.from || (item == null ? void 0 : item.from_address) || "";
+  Array.isArray(item.to) ? item.to.join(", ") : item.to || "";
+  const subject = item.subject || "";
+  const text = item.text || item.html || "";
+  const date = item.created_at || item.date || (/* @__PURE__ */ new Date()).toISOString();
+  const id = item.id || crypto.randomUUID();
+  return {
+    id,
+    name: ((_b = (_a = from == null ? void 0 : from.split("<")[0]) == null ? void 0 : _a.trim()) == null ? void 0 : _b.replace(/\s+<$/, "")) || (from || "Unknown"),
+    email: ((_c = from.match(/<([^>]+)>/)) == null ? void 0 : _c[1]) || from || "unknown@unknown",
+    subject,
+    text: typeof text === "string" ? text : "",
+    date,
+    read: true,
+    labels: ["sent"]
+  };
+}
+const sent_get = defineEventHandler(async (event) => {
+  var _a;
+  try {
+    const RESEND_API_KEY = process.env.resend_api_key || process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) {
+      return {
+        ok: false,
+        message: "Missing RESEND_API_KEY. Set RESEND_API_KEY in your environment to fetch Sent messages from Resend.",
+        mails: []
+      };
+    }
+    const resend = new Resend(RESEND_API_KEY);
+    let mails = [];
+    const maybeList = (_a = resend == null ? void 0 : resend.emails) == null ? void 0 : _a.list;
+    if (typeof maybeList === "function") {
+      try {
+        const res = await maybeList.call(resend.emails, { limit: 50 });
+        const items = Array.isArray(res == null ? void 0 : res.data) ? res.data : Array.isArray(res) ? res : [];
+        mails = items.map(toMail);
+      } catch (e) {
+      }
+    }
+    return {
+      ok: true,
+      mails,
+      note: mails.length ? void 0 : "No Sent emails retrieved. Resend may not expose list API for your plan/version, or there are no recent messages."
+    };
+  } catch (err) {
+    console.error("Resend sent.get error", err);
+    return { ok: false, mails: [], message: "Failed to retrieve Sent emails from Resend." };
+  }
+});
+
+const sent_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: sent_get
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function renderPayloadResponse(ssrContext) {
