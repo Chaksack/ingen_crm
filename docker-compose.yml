@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ingen_one
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/ingen_one?sslmode=disable
+      API_PORT: "8080"
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api
+          target: /app
+          ignore:
+            - vendor/
+            - bin/
+        - action: rebuild
+          path: ./apps/api/go.mod
+        - action: rebuild
+          path: ./apps/api/go.sum
+
+volumes:
+  db_data:

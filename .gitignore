@@ -1,0 +1,19 @@
+# Environment
+.env
+.env.*
+
+# Node
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# Go
+bin/
+build/
+
+# OS/Editor
+.DS_Store
+*.log
+.idea/
+.vscode/
