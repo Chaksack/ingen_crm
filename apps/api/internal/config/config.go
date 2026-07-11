@@ -8,9 +8,12 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	Port        string
-	JWTSecret   string
+	DatabaseURL     string
+	Port            string
+	JWTSecret       string
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	PushContact     string
 }
 
 func Load() (*Config, error) {
@@ -30,5 +33,14 @@ func Load() (*Config, error) {
 	if port == "" {
 		port = "8080"
 	}
-	return &Config{DatabaseURL: dbURL, Port: port, JWTSecret: jwtSecret}, nil
+	// Web Push is optional: if unset, push.Sender silently no-ops rather than
+	// failing startup, so local dev without VAPID keys still works.
+	return &Config{
+		DatabaseURL:     dbURL,
+		Port:            port,
+		JWTSecret:       jwtSecret,
+		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
+		PushContact:     os.Getenv("PUSH_CONTACT"),
+	}, nil
 }

@@ -1,11 +1,11 @@
-version: "3.9"
+name: ingencore
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: ingen_one
+      POSTGRES_DB: ingencore
     ports:
       - "5432:5432"
     volumes:
@@ -17,8 +17,15 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://user:password@db:5432/ingen_one?sslmode=disable
+      # A separate, unprivileged role for RLS to actually apply — the
+      # bootstrap POSTGRES_USER above is a superuser, and RLS never applies
+      # to superusers/BYPASSRLS roles regardless of FORCE ROW LEVEL SECURITY.
+      # See db/migrations/0006_row_level_security.sql.
+      DATABASE_URL: postgresql://app_role:apppassword@db:5432/ingencore?sslmode=disable
       API_PORT: "8080"
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      PUSH_CONTACT: ${PUSH_CONTACT}
     depends_on:
       - db
     ports:

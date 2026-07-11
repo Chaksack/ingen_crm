@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
+	"github.com/jackc/pgx/v5"
 
-	"ingen.one/api/internal/auth"
+	"ingencore/api/internal/auth"
+	"ingencore/api/internal/db"
 )
 
 type inboundMessage struct {
@@ -37,6 +39,9 @@ func (h *Handler) Serve(c *websocket.Conn) {
 	h.hub.Register(userID, c)
 	defer h.hub.Unregister(userID)
 
+	var senderName string
+	_ = h.pool.QueryRow(context.Background(), `SELECT display_name FROM users WHERE id=$1`, userID).Scan(&senderName)
+
 	for {
 		var in inboundMessage
 		if err := c.ReadJSON(&in); err != nil {
@@ -48,11 +53,13 @@ func (h *Handler) Serve(c *websocket.Conn) {
 
 		var id string
 		createdAt := time.Now().UTC()
-		err := h.pool.QueryRow(context.Background(),
-			`INSERT INTO messages(organization_id, sender_user_id, recipient_user_id, body)
-			 VALUES ($1,$2,$3,$4) RETURNING id, created_at`,
-			orgID, userID, in.To, in.Body,
-		).Scan(&id, &createdAt)
+		err := db.WithOrgTx(context.Background(), h.pool, orgID, func(tx pgx.Tx) error {
+			return tx.QueryRow(context.Background(),
+				`INSERT INTO messages(organization_id, sender_user_id, recipient_user_id, body)
+				 VALUES ($1,$2,$3,$4) RETURNING id, created_at`,
+				orgID, userID, in.To, in.Body,
+			).Scan(&id, &createdAt)
+		})
 		if err != nil {
 			log.Printf("collab: could not persist message: %v", err)
 			continue
@@ -63,6 +70,15 @@ func (h *Handler) Serve(c *websocket.Conn) {
 			Body: in.Body, CreatedAt: createdAt.Format(time.RFC3339),
 		}
 		_ = c.WriteJSON(out) // echo to sender for optimistic UI reconciliation
-		h.hub.Send(in.To, out)
+		if delivered := h.hub.Send(in.To, out); !delivered {
+			title := "New message"
+			if senderName != "" {
+				title = senderName
+			}
+			_ = db.WithOrgTx(context.Background(), h.pool, orgID, func(tx pgx.Tx) error {
+				h.push.SendToUser(context.Background(), tx, orgID, in.To, title, in.Body, "/chat/"+userID)
+				return nil
+			})
+		}
 	}
 }

@@ -6,30 +6,33 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"ingen.one/api/internal/auth"
+	"ingencore/api/internal/auth"
+	"ingencore/api/internal/db"
+	"ingencore/api/internal/push"
 )
 
 type Handler struct {
 	pool *pgxpool.Pool
 	hub  *Hub
+	push *push.Sender
 }
 
-func NewHandler(pool *pgxpool.Pool, hub *Hub) *Handler {
-	return &Handler{pool: pool, hub: hub}
+func NewHandler(pool *pgxpool.Pool, hub *Hub, pushSender *push.Sender) *Handler {
+	return &Handler{pool: pool, hub: hub, push: pushSender}
 }
 
 // ListUsers returns the tenant's users so the caller can start a 1:1 chat.
 func (h *Handler) ListUsers(c *fiber.Ctx) error {
 	orgID := auth.OrgID(c)
 	selfID := auth.UserID(c)
-	rows, err := h.pool.Query(c.Context(),
+	rows, err := db.Tx(c).Query(c.Context(),
 		`SELECT id, display_name, email FROM users WHERE organization_id=$1 AND id<>$2 ORDER BY display_name`,
 		orgID, selfID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not list users")
 	}
 	defer rows.Close()
-	var out []fiber.Map
+	out := []fiber.Map{}
 	for rows.Next() {
 		var id, displayName, email string
 		if err := rows.Scan(&id, &displayName, &email); err != nil {
@@ -48,7 +51,7 @@ func (h *Handler) MessageHistory(c *fiber.Ctx) error {
 	selfID := auth.UserID(c)
 	otherID := c.Params("userID")
 
-	rows, err := h.pool.Query(c.Context(),
+	rows, err := db.Tx(c).Query(c.Context(),
 		`SELECT id, sender_user_id, recipient_user_id, body, created_at
 		 FROM messages
 		 WHERE organization_id=$1
@@ -60,7 +63,7 @@ func (h *Handler) MessageHistory(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not load messages")
 	}
 	defer rows.Close()
-	var out []fiber.Map
+	out := []fiber.Map{}
 	for rows.Next() {
 		var id, sender, recipient, body string
 		var createdAt time.Time

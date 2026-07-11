@@ -30,7 +30,7 @@ async function onSubmit() {
 <template>
   <Card class="w-full max-w-sm">
     <CardHeader>
-      <CardTitle>Sign in to Ingen One</CardTitle>
+      <CardTitle>Sign in to IngenCore</CardTitle>
       <CardDescription>Use your organization credentials.</CardDescription>
     </CardHeader>
     <CardContent>

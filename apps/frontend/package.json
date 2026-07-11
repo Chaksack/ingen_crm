@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "ingencore-frontend",
   "type": "module",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.115",
-    "@lucide/vue": "^1.23.0",
+    "@lucide/vue": "^1.24.0",
     "@nuxt/icon": "^2.2.5",
     "@nuxtjs/color-mode": "^4.0.1",
     "@pinia/nuxt": "^0.11.3",
@@ -36,6 +36,8 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.2",
     "tailwindcss": "^4.3.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1"
   }
 }

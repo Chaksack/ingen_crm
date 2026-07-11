@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"context"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,8 +8,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 
-	"ingen.one/api/internal/auth"
-	"ingen.one/api/internal/entitlement"
+	"ingencore/api/internal/auth"
+	"ingencore/api/internal/db"
+	"ingencore/api/internal/entitlement"
 )
 
 type Handler struct {
@@ -61,6 +61,11 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	if err := tx.QueryRow(ctx, `INSERT INTO organizations(name) VALUES ($1) RETURNING id`, req.OrganizationName).Scan(&orgID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not create organization")
 	}
+	// Every table touched below is RLS-protected; set the session's tenant
+	// context now that the org exists, before writing anything else to it.
+	if err := db.SetOrgContext(ctx, tx, orgID); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not set tenant context")
+	}
 	if err := tx.QueryRow(ctx, `INSERT INTO business_units(organization_id, name) VALUES ($1,'HQ') RETURNING id`, orgID).Scan(&buID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not create business unit")
 	}
@@ -78,10 +83,29 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	if _, err := tx.Exec(ctx, `INSERT INTO user_roles(user_id, role_id) VALUES ($1,$2)`, userID, roleID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not assign admin role")
 	}
+	if err := seedRolePrivileges(ctx, tx, roleID, true); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not seed admin privileges")
+	}
+	// Member is the default role for invited teammates; create it up front
+	// so the first invite doesn't need special-case role provisioning.
+	var memberRoleID string
+	if err := tx.QueryRow(ctx, `INSERT INTO roles(organization_id, name) VALUES ($1,'Member') RETURNING id`, orgID).Scan(&memberRoleID); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not create member role")
+	}
+	if err := seedRolePrivileges(ctx, tx, memberRoleID, false); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not seed member privileges")
+	}
 	for _, m := range defaultEntitlements {
 		if _, err := tx.Exec(ctx, `INSERT INTO module_entitlements(organization_id, module) VALUES ($1,$2)`, orgID, m); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "could not set entitlements")
 		}
+	}
+	// Default SLA policy (60m first response / 480m resolution); Admins can
+	// tune it from Service settings once entitled.
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO sla_policies(organization_id, first_response_minutes, resolution_minutes) VALUES ($1,60,480)`, orgID,
+	); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not create default SLA policy")
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not commit registration")
@@ -155,7 +179,7 @@ func (h *Handler) Me(c *fiber.Ctx) error {
 
 	var email, displayName, orgID string
 	var buID *string
-	err := h.pool.QueryRow(ctx,
+	err := db.Tx(c).QueryRow(ctx,
 		`SELECT email, display_name, organization_id, business_unit_id FROM users WHERE id=$1`,
 		userID,
 	).Scan(&email, &displayName, &orgID, &buID)
@@ -163,7 +187,7 @@ func (h *Handler) Me(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "user not found")
 	}
 
-	rows, err := h.pool.Query(ctx,
+	rows, err := db.Tx(c).Query(ctx,
 		`SELECT r.name FROM roles r JOIN user_roles ur ON ur.role_id = r.id WHERE ur.user_id=$1`, userID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not load roles")
@@ -210,7 +234,7 @@ var moduleNav = map[string]navItem{
 // widgets for the caller's tenant, per PRD §7.4 (module entitlement architecture).
 func (h *Handler) Manifest(c *fiber.Ctx) error {
 	orgID := auth.OrgID(c)
-	mods, err := entitlement.List(context.Background(), h.pool, orgID)
+	mods, err := entitlement.List(c.Context(), db.Tx(c), orgID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not load manifest")
 	}

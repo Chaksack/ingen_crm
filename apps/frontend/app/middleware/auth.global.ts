@@ -1,4 +1,8 @@
-const publicPages = ['/login', '/register']
+// Redirect away to "/" if the visitor is already authenticated.
+const publicOnlyPages = ['/login', '/register']
+// Reachable regardless of auth state (e.g. an invite link opened while
+// already logged in to a different org).
+const alwaysPublicPages = ['/accept-invite']
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
@@ -7,7 +11,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     auth.hydrate()
   }
 
-  const isPublic = publicPages.includes(to.path)
+  if (alwaysPublicPages.includes(to.path)) return
+
+  const isPublic = publicOnlyPages.includes(to.path)
 
   if (!auth.token) {
     if (!isPublic) return navigateTo('/login')

@@ -88,7 +88,7 @@ func seed(pool *pgxpool.Pool) (*ids, error) {
 	}
 
 	// 3) User (dev admin)
-	const email = "dev@ingen.local"
+	const email = "dev@ingencore.local"
 	const displayName = "Dev Admin"
 	const plainPassword = "password"
 
@@ -163,5 +163,5 @@ func main() {
 	fmt.Printf("  Organization ID: %s\n", got.orgID)
 	fmt.Printf("  Business Unit ID: %s\n", got.buID)
 	fmt.Printf("  Admin User ID: %s\n", got.userID)
-	fmt.Println("  Credentials: dev@ingen.local / password")
+	fmt.Println("  Credentials: dev@ingencore.local / password")
 }

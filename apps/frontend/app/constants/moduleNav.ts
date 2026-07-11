@@ -20,6 +20,7 @@ export const moduleNavConfig: Record<string, NavItem> = {
     children: [
       { title: 'Cases', link: '/service/cases' },
       { title: 'Queues', link: '/service/queues' },
+      { title: 'Knowledge Base', link: '/service/kb' },
     ],
   },
   collab: {

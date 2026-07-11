@@ -3,11 +3,22 @@ import { h } from 'vue'
 import type { ColumnDef } from '@tanstack/vue-table'
 
 interface Queue { id: string; name: string }
-interface Case { id: string; subject: string; priority: string | null; status: string; queue_id: string | null }
+interface SLAInfo { status: string; due_at?: string; achieved_at?: string }
+interface Case {
+  id: string
+  subject: string
+  priority: string | null
+  status: string
+  queue_id: string | null
+  contact_id: string | null
+  first_response_sla: SLAInfo
+  resolution_sla: SLAInfo
+}
 
 const api = useApi()
 const queues = ref<Queue[]>([])
 const cases = ref<Case[]>([])
+const error = ref('')
 
 const newSubject = ref('')
 const newPriority = ref('normal')
@@ -38,14 +49,57 @@ async function createCase() {
   }
 }
 
+async function setStatus(item: Case, status: string) {
+  error.value = ''
+  try {
+    await api(`/service/cases/${item.id}`, {
+      method: 'PUT',
+      body: {
+        subject: item.subject, priority: item.priority, status,
+        queue_id: item.queue_id, contact_id: item.contact_id,
+      },
+    })
+    await load()
+  } catch {
+    error.value = `Could not update "${item.subject}" — you may not have permission to edit this case.`
+  }
+}
+
+async function respond(item: Case) {
+  error.value = ''
+  try {
+    await api(`/service/cases/${item.id}/respond`, { method: 'POST' })
+    await load()
+  } catch {
+    error.value = `Could not respond to "${item.subject}" — you may not have permission to edit this case.`
+  }
+}
+
 function queueName(id: string | null) {
   return queues.value.find((q) => q.id === id)?.name ?? '—'
 }
 
-const statusVariant: Record<string, 'default' | 'outline' | 'secondary' | 'destructive'> = {
-  new: 'default',
-  open: 'secondary',
-  resolved: 'outline',
+const statusOptions = ['new', 'open', 'waiting', 'resolved', 'closed']
+
+const slaVariant: Record<string, 'default' | 'outline' | 'secondary' | 'destructive'> = {
+  ok: 'outline',
+  warning: 'default',
+  breached: 'destructive',
+  met: 'secondary',
+  met_late: 'secondary',
+  'n/a': 'outline',
+}
+const slaLabel: Record<string, string> = {
+  ok: 'On track',
+  warning: 'Due soon',
+  breached: 'Breached',
+  met: 'Met',
+  met_late: 'Met late',
+  'n/a': '—',
+}
+
+function slaBadge(sla: SLAInfo) {
+  return h(resolveComponent('Badge'), { variant: slaVariant[sla.status] ?? 'outline' }, () => slaLabel[sla.status] ?? sla.status)
 }
 
 const columns: ColumnDef<Case, any>[] = [
@@ -57,10 +111,43 @@ const columns: ColumnDef<Case, any>[] = [
     cell: ({ row }) => queueName(row.original.queue_id),
   },
   {
+    id: 'first_response',
+    header: 'First response',
+    cell: ({ row }) => slaBadge(row.original.first_response_sla),
+  },
+  {
+    id: 'resolution',
+    header: 'Resolution',
+    cell: ({ row }) => slaBadge(row.original.resolution_sla),
+  },
+  {
     accessorKey: 'status',
     header: 'Status',
     enableSorting: true,
-    cell: ({ row }) => h(resolveComponent('Badge'), { variant: statusVariant[row.original.status] ?? 'default' }, () => row.original.status),
+    cell: ({ row }) => h(
+      resolveComponent('Select'),
+      {
+        modelValue: row.original.status,
+        'onUpdate:modelValue': (v: string) => setStatus(row.original, v),
+      },
+      {
+        default: () => [
+          h(resolveComponent('SelectTrigger'), { class: 'w-32' }, { default: () => h(resolveComponent('SelectValue')) }),
+          h(resolveComponent('SelectContent'), {}, {
+            default: () => statusOptions.map((s) => h(resolveComponent('SelectItem'), { value: s, key: s }, () => s)),
+          }),
+        ],
+      },
+    ),
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => {
+      const item = row.original
+      if (item.first_response_sla.status === 'met' || item.first_response_sla.status === 'met_late') return null
+      return h(resolveComponent('Button'), { variant: 'ghost', size: 'sm', onClick: () => respond(item) }, () => 'Respond')
+    },
   },
 ]
 
@@ -100,6 +187,8 @@ onMounted(load)
         </form>
       </CardContent>
     </Card>
+
+    <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
 
     <BaseDataTable :columns="columns" :data="cases" search-placeholder="Filter cases…" />
   </div>

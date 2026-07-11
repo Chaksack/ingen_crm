@@ -17,7 +17,7 @@ const breadcrumbOverride = useBreadcrumbOverride()
 const messages = computed(() => chat.messagesByPeer[peerId.value] ?? [])
 
 async function load() {
-  const users = await api<CollabUser[]>('/collab/users')
+  const users = await api<CollabUser[]>('/collab/users') ?? []
   peer.value = users.find((u) => u.id === peerId.value) ?? null
   breadcrumbOverride.value = peer.value?.display_name ?? null
   const history = await api<ChatMessage[]>(`/collab/messages/${peerId.value}`)

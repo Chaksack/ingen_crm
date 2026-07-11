@@ -1,5 +1,5 @@
 # Product Requirements Document
-## "Ingen One" — Unified Business Applications Platform
+## "IngenCore" — Unified Business Applications Platform
 ### A Dynamics 365-class ERP/CRM suite with native real-time collaboration
 
 **Version:** 1.1 | **Date:** July 2026 | **Owner:** Andrew | **Status:** Draft for review
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-Ingen One is a self-hosted, multi-tenant business applications platform delivering the core capabilities of Microsoft Dynamics 365 — Sales, Customer Service, Finance, Supply Chain/Operations, HR, and Project Operations — combined with a **native collaboration suite** (persistent chat, channels, meeting links, and audio/video calling) built into the platform rather than bolted on via Microsoft Teams.
+IngenCore is a self-hosted, multi-tenant business applications platform delivering the core capabilities of Microsoft Dynamics 365 — Sales, Customer Service, Finance, Supply Chain/Operations, HR, and Project Operations — combined with a **native collaboration suite** (persistent chat, channels, meeting links, and audio/video calling) built into the platform rather than bolted on via Microsoft Teams.
 
 The platform is built on a modern, cost-efficient stack: **Nuxt (TypeScript) + shadcn-vue** frontend, **Go (GoFiber)** backend services, and **Neon** (serverless Postgres) as the primary datastore, with WebRTC infrastructure for real-time media.
 

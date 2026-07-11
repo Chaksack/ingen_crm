@@ -32,9 +32,16 @@ export default defineNuxtConfig({
 
   pwa: {
     registerType: 'autoUpdate',
+    // injectManifest (not the default generateSW) is required so the custom
+    // service worker in service-worker/sw.ts can handle `push` and
+    // `notificationclick` — generateSW's fixed Workbox template has no room
+    // for custom event listeners.
+    strategies: 'injectManifest',
+    srcDir: 'service-worker',
+    filename: 'sw.ts',
     manifest: {
-      name: 'Ingen One',
-      short_name: 'IngenOne',
+      name: 'IngenCore',
+      short_name: 'IngenCore',
       description: 'Unified Business Applications Platform',
       theme_color: '#0f172a',
       background_color: '#0f172a',
@@ -44,12 +51,12 @@ export default defineNuxtConfig({
         { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
       ],
     },
-    workbox: {
-      navigateFallback: '/',
+    injectManifest: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
     },
     devOptions: {
       enabled: true,
+      type: 'module',
     },
   },
 })

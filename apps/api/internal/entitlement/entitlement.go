@@ -4,24 +4,24 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v5/pgxpool"
 
-	"ingen.one/api/internal/auth"
+	"ingencore/api/internal/auth"
+	"ingencore/api/internal/db"
 )
 
 var AllModules = []string{"sales", "service", "collab", "finance", "scm", "projects", "hr", "marketing"}
 
-func Enabled(ctx context.Context, pool *pgxpool.Pool, orgID, module string) (bool, error) {
+func Enabled(ctx context.Context, q db.Queryer, orgID, module string) (bool, error) {
 	var exists bool
-	err := pool.QueryRow(ctx,
+	err := q.QueryRow(ctx,
 		`SELECT EXISTS(SELECT 1 FROM module_entitlements WHERE organization_id=$1 AND module=$2)`,
 		orgID, module,
 	).Scan(&exists)
 	return exists, err
 }
 
-func List(ctx context.Context, pool *pgxpool.Pool, orgID string) ([]string, error) {
-	rows, err := pool.Query(ctx, `SELECT module FROM module_entitlements WHERE organization_id=$1`, orgID)
+func List(ctx context.Context, q db.Queryer, orgID string) ([]string, error) {
+	rows, err := q.Query(ctx, `SELECT module FROM module_entitlements WHERE organization_id=$1`, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,11 +38,13 @@ func List(ctx context.Context, pool *pgxpool.Pool, orgID string) ([]string, erro
 }
 
 // Require returns 404 (not 403) when the module is disabled for the tenant,
-// per the platform rule that disabled modules are invisible.
-func Require(pool *pgxpool.Pool, module string) fiber.Handler {
+// per the platform rule that disabled modules are invisible. Must be mounted
+// under db.Middleware so db.Tx(c) resolves to the request's tenant-scoped
+// transaction.
+func Require(module string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID := auth.OrgID(c)
-		ok, err := Enabled(c.Context(), pool, orgID, module)
+		ok, err := Enabled(c.Context(), db.Tx(c), orgID, module)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "entitlement check failed")
 		}

@@ -25,7 +25,7 @@ function resolveNavItemComponent(item: NavItem) {
               <Icon name="lucide:layout-grid" class="size-4" />
             </div>
             <div class="grid flex-1 text-left text-sm leading-tight">
-              <span class="truncate font-semibold">Ingen One</span>
+              <span class="truncate font-semibold">IngenCore</span>
               <span class="truncate text-xs text-muted-foreground">{{ auth.user?.organization_id ? 'Workspace' : '' }}</span>
             </div>
           </SidebarMenuButton>
@@ -43,6 +43,16 @@ function resolveNavItemComponent(item: NavItem) {
         <SidebarGroupLabel>Modules</SidebarGroupLabel>
         <SidebarMenu>
           <component :is="resolveNavItemComponent(item)" v-for="(item, index) in navItems" :key="index" :item="item" />
+        </SidebarMenu>
+      </SidebarGroup>
+      <SidebarGroup v-if="auth.isAdmin">
+        <SidebarGroupLabel>Admin</SidebarGroupLabel>
+        <SidebarMenu>
+          <LayoutSidebarNavLink :item="{ title: 'Team', link: '/team', icon: 'lucide:users' }" />
+          <LayoutSidebarNavLink :item="{ title: 'Roles', link: '/team/roles', icon: 'lucide:shield-check' }" />
+          <LayoutSidebarNavLink :item="{ title: 'Business Units', link: '/team/business-units', icon: 'lucide:network' }" />
+          <LayoutSidebarNavLink :item="{ title: 'Workflows', link: '/automation/workflows', icon: 'lucide:workflow' }" />
+          <LayoutSidebarNavLink :item="{ title: 'Audit Log', link: '/audit', icon: 'lucide:history' }" />
         </SidebarMenu>
       </SidebarGroup>
     </SidebarContent>

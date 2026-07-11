@@ -33,6 +33,7 @@ watch(() => route.path, () => {
       <BaseBreadcrumbCustom :links="links" />
     </div>
     <div class="ml-auto flex items-center gap-2">
+      <LayoutNotificationBell />
       <DarkToggle />
     </div>
   </header>
