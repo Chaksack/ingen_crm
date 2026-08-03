@@ -14,6 +14,8 @@ const connectionString = process.env.DATABASE_URL
 if (!connectionString)
   throw new Error('DATABASE_URL is not set')
 
-const queryClient = postgres(connectionString)
+// Serverless functions (Vercel, etc.) spin up fresh instances per invocation, so each
+// one should hold at most a couple of connections rather than postgres.js's default pool of 10.
+const queryClient = postgres(connectionString, { max: 3, idle_timeout: 20, connect_timeout: 10 })
 
 export const db = drizzle(queryClient, { schema, casing: 'snake_case' })
