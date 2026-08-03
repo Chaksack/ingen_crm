@@ -34,7 +34,10 @@ async function sendEmail(to: string, subject: string, html: string, devLabel: st
 
   try {
     const result = await resend.emails.send({
-      from: 'Ingenicx <onboarding@resend.dev>',
+      // Resend's shared onboarding@resend.dev sender only delivers to the account owner's own
+      // verified address. Set RESEND_FROM_EMAIL once a custom domain is verified in Resend to
+      // unblock sending to arbitrary recipients (real staff invites, password resets, etc).
+      from: process.env.RESEND_FROM_EMAIL || 'Ingenicx <onboarding@resend.dev>',
       to,
       subject,
       html,

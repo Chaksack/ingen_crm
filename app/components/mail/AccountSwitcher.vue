@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 
-import { cn } from '@/lib/utils'
-
 interface AccountSwitcherProps {
   isCollapsed: boolean
   accounts: {
@@ -23,14 +21,14 @@ const selectedEmailData = computed(() => props.accounts.find(item => item.email 
     <SelectTrigger
       aria-label="Select account"
       :class="cn(
-        'flex items-center gap-2 [&>span]:line-clamp-1 [&>span]:flex [&>span]:w-full [&>span]:items-center [&>span]:gap-1 [&>span]:truncate [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 w-full',
+        'flex w-full items-center gap-2 border-0 bg-transparent px-1.5 shadow-none hover:bg-accent focus-visible:ring-0 [&>span]:line-clamp-1 [&>span]:flex [&>span]:w-full [&>span]:items-center [&>span]:gap-1 [&>span]:truncate [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0',
         { 'flex h-9 w-9 shrink-0 items-center justify-center p-0 [&>span]:w-auto [&>svg]:hidden': isCollapsed },
       )"
     >
       <SelectValue placeholder="Select an account">
-        <div class="flex items-center gap-3">
-          <Icon class="size-4" :name="selectedEmailData!.icon" />
-          <span v-if="!isCollapsed">
+        <div class="flex items-center gap-2">
+          <Icon class="size-4 text-[#0078D4]" :name="selectedEmailData!.icon" />
+          <span v-if="!isCollapsed" class="text-[13px] font-semibold">
             {{ selectedEmailData!.label }}
           </span>
         </div>

@@ -2,12 +2,12 @@
 import type { Mail } from './data/mails'
 import type { LinkProp } from '~/components/mail/Nav.vue'
 import { useMediaQuery } from '@vueuse/core'
-import { Search } from 'lucide-vue-next'
+import { ListFilter, PenSquare, Search } from 'lucide-vue-next'
 import { cn } from '~/lib/utils'
 
 const props = withDefaults(defineProps<MailProps>(), {
   defaultCollapsed: false,
-  defaultLayout: () => [18, 82],
+  defaultLayout: () => [18, 32, 50],
 })
 
 interface MailProps {
@@ -26,6 +26,7 @@ const isCollapsed = ref(props.defaultCollapsed)
 const selectedMail = ref<string | undefined>()
 const searchValue = ref('')
 const debouncedSearch = refDebounced(searchValue, 250)
+const activeTab = ref<'all' | 'unread'>('all')
 
 const filteredMailList = computed(() => {
   let output: Mail[]
@@ -33,21 +34,17 @@ const filteredMailList = computed(() => {
   if (!searchValue) {
     output = props.mails
   }
-
   else {
     output = props.mails.filter((item) => {
       return item.name.includes(debouncedSearch.value)
         || item.email.includes(debouncedSearch.value)
-        || item.name.includes(debouncedSearch.value)
         || item.subject.includes(debouncedSearch.value)
         || item.text.includes(debouncedSearch.value)
     })
   }
 
-  return output
+  return activeTab.value === 'unread' ? output.filter(item => !item.read) : output
 })
-
-const unreadMailList = computed(() => filteredMailList.value.filter(item => !item.read))
 
 const selectedMailData = computed(() => props.mails.find(item => item.id === selectedMail.value))
 
@@ -65,19 +62,19 @@ const links: LinkProp[] = [
     variant: 'ghost',
   },
   {
-    title: 'Sent',
+    title: 'Sent Items',
     label: '',
     icon: 'lucide:send',
     variant: 'ghost',
   },
   {
-    title: 'Junk',
+    title: 'Junk Email',
     label: '23',
-    icon: 'lucide:archive',
+    icon: 'lucide:shield-alert',
     variant: 'ghost',
   },
   {
-    title: 'Trash',
+    title: 'Deleted Items',
     label: '',
     icon: 'lucide:trash',
     variant: 'ghost',
@@ -118,7 +115,7 @@ const links2: LinkProp[] = [
   {
     title: 'Promotions',
     label: '21',
-    icon: 'lucide:archive',
+    icon: 'lucide:tag',
     variant: 'ghost',
   },
 ]
@@ -143,7 +140,7 @@ watch(() => defaultCollapse.value, () => {
     <ResizablePanelGroup
       id="resize-panel-group-1"
       direction="horizontal"
-      class="h-full max-h-[calc(100dvh-54px-3rem)] items-stretch"
+      class="h-full max-h-[calc(100dvh-54px-3rem)] items-stretch rounded-lg border"
     >
       <ResizablePanel
         id="resize-panel-1"
@@ -151,58 +148,82 @@ watch(() => defaultCollapse.value, () => {
         :collapsed-size="navCollapsedSize"
         collapsible
         :min-size="15"
-        :max-size="20"
-        :class="cn(isCollapsed && 'min-w-[50px] transition-all duration-300 ease-in-out')"
+        :max-size="22"
+        :class="cn('flex h-full flex-col bg-muted/30', isCollapsed && 'min-w-[50px] transition-all duration-300 ease-in-out')"
         @expand="onExpand"
         @collapse="onCollapse"
       >
-        <div :class="cn('flex h-[56px] items-center', isCollapsed ? 'h-[56px]' : 'px-2')">
+        <div :class="cn('flex h-[52px] shrink-0 items-center', isCollapsed ? 'justify-center' : 'px-2.5')">
           <MailAccountSwitcher :is-collapsed="isCollapsed" :accounts="accounts" />
         </div>
+
+        <div :class="cn('shrink-0 pb-2', isCollapsed ? 'flex justify-center' : 'px-2.5')">
+          <Tooltip v-if="isCollapsed" :delay-duration="0">
+            <TooltipTrigger as-child>
+              <Button size="icon" class="size-9 rounded-full bg-[#0078D4] text-white hover:bg-[#106EBE]">
+                <PenSquare class="size-4" />
+                <span class="sr-only">New message</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              New message
+            </TooltipContent>
+          </Tooltip>
+          <Button v-else class="w-full justify-center gap-2 rounded-md bg-[#0078D4] font-medium text-white hover:bg-[#106EBE]">
+            <PenSquare class="size-4" />
+            New message
+          </Button>
+        </div>
+
         <Separator />
-        <MailNav
-          :is-collapsed="isCollapsed"
-          :links="links"
-        />
-        <Separator />
-        <MailNav
-          :is-collapsed="isCollapsed"
-          :links="links2"
-        />
+        <div class="min-h-0 flex-1 overflow-y-auto">
+          <MailNav
+            :is-collapsed="isCollapsed"
+            :links="links"
+          />
+          <Separator class="my-1" />
+          <MailNav
+            :is-collapsed="isCollapsed"
+            :links="links2"
+          />
+        </div>
       </ResizablePanel>
       <ResizableHandle id="resize-handle-1" with-handle />
-      <ResizablePanel id="resize-panel-2" :default-size="defaultLayout[1]" :min-size="30">
-        <MailDisplay v-if="selectedMailData" :mail="selectedMailData" @close="selectedMail = ''" />
-        <Tabs v-else default-value="all">
-          <div class="flex items-center px-4 py-2">
-            <h1 class="text-xl font-bold">
-              Inbox
-            </h1>
-            <TabsList class="ml-auto">
-              <TabsTrigger value="all" class="text-zinc-600 dark:text-zinc-200">
-                All mail
-              </TabsTrigger>
-              <TabsTrigger value="unread" class="text-zinc-600 dark:text-zinc-200">
-                Unread
-              </TabsTrigger>
-            </TabsList>
+      <ResizablePanel id="resize-panel-2" :default-size="defaultLayout[1]" :min-size="25" class="flex h-full flex-col">
+        <div class="flex h-[52px] shrink-0 items-center gap-4 border-b px-4">
+          <button
+            type="button"
+            :class="cn(
+              'border-b-2 py-2 text-sm font-medium transition-colors -mb-px',
+              activeTab === 'all' ? 'border-[#0078D4] text-[#0078D4] dark:text-[#4CC2FF]' : 'border-transparent text-muted-foreground hover:text-foreground',
+            )"
+            @click="activeTab = 'all'"
+          >
+            All mail
+          </button>
+          <button
+            type="button"
+            :class="cn(
+              'border-b-2 py-2 text-sm font-medium transition-colors -mb-px',
+              activeTab === 'unread' ? 'border-[#0078D4] text-[#0078D4] dark:text-[#4CC2FF]' : 'border-transparent text-muted-foreground hover:text-foreground',
+            )"
+            @click="activeTab = 'unread'"
+          >
+            Unread
+          </button>
+          <ListFilter class="ml-auto size-4 text-muted-foreground" />
+        </div>
+        <div class="shrink-0 p-3">
+          <div class="relative">
+            <Search class="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+            <Input v-model="searchValue" placeholder="Search mail" class="rounded-md bg-background pl-8" />
           </div>
-          <Separator />
-          <div class="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <form>
-              <div class="relative">
-                <Search class="absolute left-2 top-2.5 size-4 text-muted-foreground" />
-                <Input v-model="searchValue" placeholder="Search" class="pl-8" />
-              </div>
-            </form>
-          </div>
-          <TabsContent value="all" class="m-0">
-            <MailList v-model:selected-mail="selectedMail" :items="filteredMailList" />
-          </TabsContent>
-          <TabsContent value="unread" class="m-0">
-            <MailList v-model:selected-mail="selectedMail" :items="unreadMailList" />
-          </TabsContent>
-        </Tabs>
+        </div>
+        <MailList v-model:selected-mail="selectedMail" :items="filteredMailList" />
+      </ResizablePanel>
+      <ResizableHandle id="resize-handle-2" with-handle />
+      <ResizablePanel id="resize-panel-3" :default-size="defaultLayout[2]" :min-size="30">
+        <MailDisplay :mail="selectedMailData" @close="selectedMail = undefined" />
       </ResizablePanel>
     </ResizablePanelGroup>
   </TooltipProvider>

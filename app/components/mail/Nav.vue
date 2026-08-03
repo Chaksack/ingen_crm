@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { buttonVariants } from '~/components/ui/button'
-
 export interface LinkProp {
   title: string
   label?: string
@@ -19,19 +17,19 @@ defineProps<NavProps>()
 <template>
   <div
     :data-collapsed="isCollapsed"
-    class="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
+    class="group flex flex-col gap-0.5 py-1 data-[collapsed=true]:py-2"
   >
-    <nav class="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
+    <nav class="grid gap-0.5 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
       <template v-for="(link, index) of links">
         <Tooltip v-if="isCollapsed" :key="`1-${index}`" :delay-duration="0">
           <TooltipTrigger as-child>
             <a
               href="#"
               :class="cn(
-                buttonVariants({ variant: link.variant, size: 'icon' }),
-                'h-9 w-9',
+                'flex h-9 w-9 items-center justify-center rounded-md transition-colors',
                 link.variant === 'default'
-                  && 'dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white',
+                  ? 'bg-[#EFF6FC] text-[#0078D4] dark:bg-[#0078D4]/15 dark:text-[#4CC2FF]'
+                  : 'text-foreground/70 hover:bg-accent hover:text-foreground',
               )"
             >
               <Icon :name="link.icon" class="size-4" />
@@ -51,20 +49,25 @@ defineProps<NavProps>()
           :key="`2-${index}`"
           href="#"
           :class="cn(
-            buttonVariants({ variant: link.variant, size: 'sm' }),
+            'relative flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] font-medium transition-colors',
             link.variant === 'default'
-              && 'dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white',
-            'justify-start',
+              ? 'bg-[#EFF6FC] text-[#0078D4] dark:bg-[#0078D4]/15 dark:text-[#4CC2FF]'
+              : 'text-foreground/80 hover:bg-accent',
           )"
         >
-          <Icon :name="link.icon" class="mr-2 size-4" />
-          {{ link.title }}
+          <span
+            v-if="link.variant === 'default'"
+            class="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-[#0078D4]"
+          />
+          <Icon :name="link.icon" class="size-4 shrink-0" />
+          <span class="truncate">{{ link.title }}</span>
           <span
             v-if="link.label"
             :class="cn(
-              'ml-auto',
+              'ml-auto shrink-0 rounded-full px-1.5 py-px text-[11px] tabular-nums',
               link.variant === 'default'
-                && 'text-background dark:text-white',
+                ? 'font-semibold text-[#0078D4] dark:text-[#4CC2FF]'
+                : 'text-muted-foreground',
             )"
           >
             {{ link.label }}
