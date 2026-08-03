@@ -1,20 +1,48 @@
 <script lang="ts" setup>
-const otp = ref('123456')
-const isLoading = ref(false)
+import { toast } from 'vue-sonner'
 
-function onSubmit(event: Event) {
+const otp = ref<string[]>([])
+const isLoading = ref(false)
+const isResending = ref(false)
+const { verifyOtp, resendOtp, fetchUser } = useAuth()
+
+async function onSubmit(event: Event) {
   event.preventDefault()
-  if (!otp.value)
+  const code = otp.value.join('')
+  if (code.length < 6)
     return
 
   isLoading.value = true
-
-  setTimeout(() => {
-    if (otp.value === '123456')
-      navigateTo('/dashboard')
-
+  try {
+    const { purpose } = await verifyOtp(code)
+    if (purpose === 'login') {
+      await fetchUser()
+      await navigateTo('/dashboard')
+    }
+    else {
+      await navigateTo('/new-password')
+    }
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Invalid or expired code')
+  }
+  finally {
     isLoading.value = false
-  }, 3000)
+  }
+}
+
+async function onResend() {
+  isResending.value = true
+  try {
+    await resendOtp()
+    toast.success('A new code has been sent to your email.')
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Could not resend code')
+  }
+  finally {
+    isResending.value = false
+  }
 }
 </script>
 
@@ -34,7 +62,7 @@ function onSubmit(event: Event) {
           <FieldLabel html-for="otp" class="sr-only">
             Verification code
           </FieldLabel>
-          <PinInput id="otp" class="justify-center">
+          <PinInput id="otp" v-model="otp" class="justify-center">
             <PinInputGroup class="gap-1 *:data-[slot=pin-input-slot]:rounded-md *:data-[slot=pin-input-slot]:border">
               <template v-for="(id, index) in 6" :key="id">
                 <PinInputSlot :index="index" />
@@ -52,7 +80,8 @@ function onSubmit(event: Event) {
           Verify
         </Button>
         <FieldDescription class="text-center">
-          Didn&apos;t receive the code? <a href="#">Resend</a>
+          Didn&apos;t receive the code?
+          <a href="#" @click.prevent="!isResending && onResend()">Resend</a>
         </FieldDescription>
       </FieldGroup>
     </form>

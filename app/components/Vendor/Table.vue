@@ -1,31 +1,20 @@
 <script setup lang="ts">
 import {
   AlertCircle,
-  X,
   ChevronDown,
   Search,
 } from 'lucide-vue-next'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -33,25 +22,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ref, computed, onMounted } from 'vue'
-import { useNuxtApp } from '#app'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert'
-import { toast } from 'vue-sonner'
-import { AvatarImage, Avatar, AvatarFallback } from '~/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 
-const vendors = ref<any[]>([])
-const isLoading = ref(false)
-const error = ref<string | null>(null)
-const searchQuery = ref<string>('')
-const statusFilter = ref<string>('all')
+interface Vendor {
+  id: string
+  vendorName: string
+  email: string
+  phone?: string
+  address?: string
+  website?: string
+  avatar?: string
+  vendorType?: string
+  registrationNumber?: string
+  foundedDate?: string
+  country?: string
+  services?: string
+  description?: string
+  status: 'active' | 'inactive' | 'pending'
+}
+
+const { data: vendors, pending: isLoading, error, refresh } = useFetch<Vendor[]>('/api/vendors')
+
+const searchQuery = ref('')
+const statusFilter = ref('all')
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
-const selectedVendor = ref<any>(null)
+const selectedVendor = ref<Vendor | null>(null)
 const isSheetOpen = ref(false)
 
-// Column visibility
 const columnVisibility = ref({
-  id: true,
   avatar: true,
   vendorName: true,
   email: true,
@@ -59,78 +68,50 @@ const columnVisibility = ref({
   actions: true,
 })
 
-// Filtered vendors based on search and status
 const filteredVendors = computed(() => {
-  let filtered = vendors.value
+  let filtered = vendors.value ?? []
 
-  // Search filter
   if (searchQuery.value) {
     filtered = filtered.filter(vendor =>
       Object.values(vendor).some(value =>
-        String(value).toLowerCase().includes(searchQuery.value.toLowerCase())
-      )
+        String(value).toLowerCase().includes(searchQuery.value.toLowerCase()),
+      ),
     )
   }
 
-  // Status filter
-  if (statusFilter.value !== 'all') {
+  if (statusFilter.value !== 'all')
     filtered = filtered.filter(vendor => vendor.status === statusFilter.value)
-  }
 
   return filtered
 })
 
-// Pagination
 const totalPages = computed(() => Math.ceil(filteredVendors.value.length / itemsPerPage.value))
 
 const paginatedVendors = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredVendors.value.slice(start, end)
+  return filteredVendors.value.slice(start, start + itemsPerPage.value)
 })
 
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
+function goToPage(page: number) {
+  if (page >= 1 && page <= totalPages.value)
     currentPage.value = page
-  }
 }
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
+function nextPage() {
+  if (currentPage.value < totalPages.value)
     currentPage.value++
-  }
 }
 
-const prevPage = () => {
-  if (currentPage.value > 1) {
+function prevPage() {
+  if (currentPage.value > 1)
     currentPage.value--
-  }
 }
 
-// Reset to page 1 when filters change
-const resetPage = () => {
+function resetPage() {
   currentPage.value = 1
 }
 
-const fetchVendors = async () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const nuxtApp = useNuxtApp()
-    const response = await nuxtApp.$axios.get('http://localhost:8080/api/vendors', {
-      withCredentials: true,
-    })
-    vendors.value = response.data
-  } catch (err) {
-    error.value = 'Failed to load vendor data.'
-    toast.error('Error fetching vendors: ' + (err as Error).message)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const getBadgeVariant = (status: string) => {
+function getBadgeVariant(status: string) {
   switch (status) {
     case 'active':
       return 'default'
@@ -143,18 +124,12 @@ const getBadgeVariant = (status: string) => {
   }
 }
 
-const closeAlert = () => {
-  error.value = null
-}
-
-const viewVendor = (vendor: any) => {
+function viewVendor(vendor: Vendor) {
   selectedVendor.value = vendor
   isSheetOpen.value = true
 }
 
-onMounted(() => {
-  fetchVendors()
-})
+defineExpose({ refresh })
 </script>
 
 <template>
@@ -162,29 +137,17 @@ onMounted(() => {
     <main class="@container/main flex flex-1 flex-col gap-4 md:gap-8">
       <Alert
         v-if="error"
-        variant="default"
-        class="alert bg-red-800 text-white relative"
+        variant="destructive"
       >
-        <AlertCircle class="w-8 h-8" />
-        <AlertTitle class="mx-4 font-bold">Error:</AlertTitle>
-        <AlertDescription class="mx-4 text-white">{{ error }}</AlertDescription>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          class="absolute top-2 right-2 h-6 w-6 text-white hover:bg-red-700"
-          @click="closeAlert"
-        >
-          <X class="h-4 w-4" />
-        </Button>
+        <AlertCircle class="w-4 h-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Failed to load vendors.</AlertDescription>
       </Alert>
-      
+
       <Card>
         <CardHeader>
           <div class="flex flex-col gap-4">
-            <!-- Search and Filters Row -->
             <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <!-- Search Input -->
               <div class="relative flex-1 max-w-sm">
                 <Search class="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -196,20 +159,26 @@ onMounted(() => {
               </div>
 
               <div class="flex gap-2 flex-wrap">
-                <!-- Status Filter -->
                 <Select v-model="statusFilter" @update:model-value="resetPage">
                   <SelectTrigger class="w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="all">
+                      All Status
+                    </SelectItem>
+                    <SelectItem value="active">
+                      Active
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      Inactive
+                    </SelectItem>
+                    <SelectItem value="pending">
+                      Pending
+                    </SelectItem>
                   </SelectContent>
                 </Select>
 
-                <!-- Column Visibility -->
                 <DropdownMenu>
                   <DropdownMenuTrigger as-child>
                     <Button variant="outline" class="ml-auto">
@@ -217,9 +186,6 @@ onMounted(() => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuCheckboxItem v-model:checked="columnVisibility.id">
-                      ID
-                    </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem v-model:checked="columnVisibility.avatar">
                       Avatar
                     </DropdownMenuCheckboxItem>
@@ -237,11 +203,10 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Results Count -->
             <div class="text-sm text-muted-foreground">
               Showing {{ paginatedVendors.length }} of {{ filteredVendors.length }} results
               <span v-if="searchQuery || statusFilter !== 'all'">
-                (filtered from {{ vendors.length }} total)
+                (filtered from {{ vendors?.length ?? 0 }} total)
               </span>
             </div>
           </div>
@@ -252,49 +217,67 @@ onMounted(() => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead v-if="columnVisibility.id">ID</TableHead>
-                  <TableHead v-if="columnVisibility.avatar">Avatar</TableHead>
-                  <TableHead v-if="columnVisibility.vendorName">Vendor Name</TableHead>
-                  <TableHead v-if="columnVisibility.email">Email</TableHead>
-                  <TableHead v-if="columnVisibility.status">Status</TableHead>
-                  <TableHead v-if="columnVisibility.actions">Actions</TableHead>
+                  <TableHead v-if="columnVisibility.avatar">
+                    Avatar
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.vendorName">
+                    Vendor Name
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.email">
+                    Email
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.status">
+                    Status
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.actions">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
 
-              <!-- Loading State -->
               <TableBody v-if="isLoading">
                 <TableRow v-for="i in itemsPerPage" :key="`skeleton-${i}`">
-                  <TableCell v-if="columnVisibility.id"><Skeleton class="h-4 w-8" /></TableCell>
-                  <TableCell v-if="columnVisibility.avatar"><Skeleton class="h-10 w-10 rounded-full" /></TableCell>
-                  <TableCell v-if="columnVisibility.vendorName"><Skeleton class="h-4 w-24" /></TableCell>
-                  <TableCell v-if="columnVisibility.email"><Skeleton class="h-4 w-40" /></TableCell>
-                  <TableCell v-if="columnVisibility.status"><Skeleton class="h-6 w-16 rounded-full" /></TableCell>
-                  <TableCell v-if="columnVisibility.actions"><Skeleton class="h-8 w-16 rounded-lg" /></TableCell>
+                  <TableCell v-if="columnVisibility.avatar">
+                    <Skeleton class="h-10 w-10 rounded-full" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.vendorName">
+                    <Skeleton class="h-4 w-24" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.email">
+                    <Skeleton class="h-4 w-40" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.status">
+                    <Skeleton class="h-6 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.actions">
+                    <Skeleton class="h-8 w-16 rounded-lg" />
+                  </TableCell>
                 </TableRow>
               </TableBody>
 
-              <!-- Data State -->
-              <TableBody v-else-if="paginatedVendors && paginatedVendors.length > 0">
-                <TableRow v-for="vendor in paginatedVendors" :key="vendor.ID">
-                  <TableCell v-if="columnVisibility.id">{{ vendor.ID || 'N/A' }}</TableCell>
+              <TableBody v-else-if="paginatedVendors.length > 0">
+                <TableRow v-for="vendor in paginatedVendors" :key="vendor.id">
                   <TableCell v-if="columnVisibility.avatar">
                     <Avatar class="relative overflow-visible">
                       <AvatarImage class="rounded-full" :src="vendor.avatar || ''" alt="Vendor Avatar" />
                       <AvatarFallback class="text-white">
-                        {{ vendor.vendorName ? vendor.vendorName.substring(0, 2).toUpperCase() : 'VN' }}
+                        {{ vendor.vendorName.substring(0, 2).toUpperCase() }}
                       </AvatarFallback>
                       <span
-                        v-if="vendor"
                         :class="vendor.status === 'active' ? 'bg-green-500' : 'bg-red-500'"
                         class="absolute bottom-[-4px] right-[-4px] w-3.5 h-3.5 rounded-full border-2 border-white"
                       />
                     </Avatar>
                   </TableCell>
-                  <TableCell v-if="columnVisibility.vendorName">{{ vendor.vendorName || 'N/A' }}</TableCell>
-                  <TableCell v-if="columnVisibility.email">{{ vendor.email || 'N/A' }}</TableCell>
+                  <TableCell v-if="columnVisibility.vendorName">
+                    {{ vendor.vendorName }}
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.email">
+                    {{ vendor.email }}
+                  </TableCell>
                   <TableCell v-if="columnVisibility.status">
                     <Badge :variant="getBadgeVariant(vendor.status)">
-                      {{ vendor.status || 'N/A' }}
+                      {{ vendor.status }}
                     </Badge>
                   </TableCell>
                   <TableCell v-if="columnVisibility.actions">
@@ -304,27 +287,25 @@ onMounted(() => {
                   </TableCell>
                 </TableRow>
               </TableBody>
-              
-              <!-- Empty State -->
+
               <TableBody v-else>
                 <TableRow>
-                  <TableCell :colspan="6" class="h-64 text-center">
+                  <TableCell :colspan="5" class="h-64 text-center">
                     <div class="flex flex-col items-center justify-center py-12">
-                      <div class="rounded-full bg-gray-100 p-4 mb-4">
-                        <AlertCircle class="w-12 h-12 text-gray-400" />
+                      <div class="rounded-full bg-muted p-4 mb-4">
+                        <AlertCircle class="w-12 h-12 text-muted-foreground" />
                       </div>
                       <h3 class="text-lg font-semibold mb-2">
                         No Vendor Data Available
                       </h3>
-                      <p class="text-sm max-w-sm">
-                        {{ searchQuery || statusFilter !== 'all' 
-                          ? 'No vendors match your search criteria. Try adjusting your filters.' 
-                          : 'No vendor data available. Get started by creating your first vendor.' 
-                        }}
+                      <p class="text-sm max-w-sm text-muted-foreground">
+                        {{ searchQuery || statusFilter !== 'all'
+                          ? 'No vendors match your search criteria. Try adjusting your filters.'
+                          : 'No vendors yet. Get started by creating your first vendor.' }}
                       </p>
-                      <Button 
+                      <Button
                         v-if="searchQuery || statusFilter !== 'all'"
-                        variant="outline" 
+                        variant="outline"
                         class="mt-4"
                         @click="searchQuery = ''; statusFilter = 'all'"
                       >
@@ -339,7 +320,6 @@ onMounted(() => {
         </CardContent>
 
         <CardFooter class="flex items-center justify-between">
-          <!-- Items per page selector -->
           <div class="flex items-center gap-2">
             <span class="text-sm text-muted-foreground">Rows per page:</span>
             <Select v-model="itemsPerPage" @update:model-value="resetPage">
@@ -347,30 +327,30 @@ onMounted(() => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem :value="5">5</SelectItem>
-                <SelectItem :value="10">10</SelectItem>
-                <SelectItem :value="20">20</SelectItem>
-                <SelectItem :value="50">50</SelectItem>
+                <SelectItem :value="5">
+                  5
+                </SelectItem>
+                <SelectItem :value="10">
+                  10
+                </SelectItem>
+                <SelectItem :value="20">
+                  20
+                </SelectItem>
+                <SelectItem :value="50">
+                  50
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <!-- Pagination Controls -->
           <div class="flex items-center gap-2">
             <span class="text-sm text-muted-foreground">
               Page {{ currentPage }} of {{ totalPages || 1 }}
             </span>
             <div class="flex gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="currentPage === 1"
-                @click="prevPage"
-              >
+              <Button variant="outline" size="sm" :disabled="currentPage === 1" @click="prevPage">
                 Previous
               </Button>
-              
-              <!-- Page Numbers -->
               <template v-for="page in totalPages" :key="page">
                 <Button
                   v-if="page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)"
@@ -381,20 +361,14 @@ onMounted(() => {
                 >
                   {{ page }}
                 </Button>
-                <span 
+                <span
                   v-else-if="page === currentPage - 2 || page === currentPage + 2"
                   class="flex items-center px-2"
                 >
                   ...
                 </span>
               </template>
-
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="currentPage === totalPages"
-                @click="nextPage"
-              >
+              <Button variant="outline" size="sm" :disabled="currentPage === totalPages" @click="nextPage">
                 Next
               </Button>
             </div>
@@ -403,7 +377,6 @@ onMounted(() => {
       </Card>
     </main>
 
-    <!-- Sheet for viewing institution details -->
     <Sheet v-model:open="isSheetOpen">
       <SheetContent side="right" class="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
@@ -411,38 +384,38 @@ onMounted(() => {
             <Avatar class="h-12 w-12">
               <AvatarImage :src="selectedVendor?.avatar || ''" alt="Vendor Avatar" />
               <AvatarFallback>
-                {{ selectedVendor?.vendorName ? selectedVendor.vendorName.substring(0, 2).toUpperCase() : 'FV' }}
+                {{ selectedVendor?.vendorName ? selectedVendor.vendorName.substring(0, 2).toUpperCase() : 'VN' }}
               </AvatarFallback>
             </Avatar>
             <div>
-              <div class="text-xl font-semibold">{{ selectedVendor?.vendorName || 'N/A' }}</div>
-              <div class="text-sm text-muted-foreground font-normal">ID: {{ selectedVendor?.ID || 'N/A' }}</div>
+              <div class="text-xl font-semibold">
+                {{ selectedVendor?.vendorName }}
+              </div>
+              <div class="text-sm text-muted-foreground font-normal">
+                {{ selectedVendor?.email }}
+              </div>
             </div>
           </SheetTitle>
           <SheetDescription>
-            View and manage vendor details
+            View vendor details
           </SheetDescription>
         </SheetHeader>
 
-        <div v-if="selectedVendor" class="mt-6 space-y-6">
-          <!-- Status Badge -->
+        <div v-if="selectedVendor" class="mt-6 space-y-6 px-4">
           <div class="flex items-center gap-2">
             <span class="text-sm font-medium">Status:</span>
             <Badge :variant="getBadgeVariant(selectedVendor.status)">
-              {{ selectedVendor.status || 'N/A' }}
+              {{ selectedVendor.status }}
             </Badge>
           </div>
 
-          <!-- Contact Information -->
           <Card>
             <CardHeader>
-              <h3 class="text-lg font-semibold">Contact Information</h3>
+              <h3 class="text-lg font-semibold">
+                Contact Information
+              </h3>
             </CardHeader>
             <CardContent class="space-y-3">
-              <div class="grid grid-cols-3 gap-2">
-                <span class="text-sm text-muted-foreground">Email:</span>
-                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.email || 'N/A' }}</span>
-              </div>
               <div class="grid grid-cols-3 gap-2">
                 <span class="text-sm text-muted-foreground">Phone:</span>
                 <span class="col-span-2 text-sm font-medium">{{ selectedVendor.phone || 'N/A' }}</span>
@@ -463,23 +436,24 @@ onMounted(() => {
             </CardContent>
           </Card>
 
-          <!-- Vendor Details -->
           <Card>
             <CardHeader>
-              <h3 class="text-lg font-semibold">Vendor Details</h3>
+              <h3 class="text-lg font-semibold">
+                Vendor Details
+              </h3>
             </CardHeader>
             <CardContent class="space-y-3">
               <div class="grid grid-cols-3 gap-2">
                 <span class="text-sm text-muted-foreground">Type:</span>
-                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.vendor_type || 'N/A' }}</span>
+                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.vendorType || 'N/A' }}</span>
               </div>
               <div class="grid grid-cols-3 gap-2">
                 <span class="text-sm text-muted-foreground">Registration Number:</span>
-                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.registration_number || 'N/A' }}</span>
+                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.registrationNumber || 'N/A' }}</span>
               </div>
               <div class="grid grid-cols-3 gap-2">
                 <span class="text-sm text-muted-foreground">Founded:</span>
-                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.founded_date || 'N/A' }}</span>
+                <span class="col-span-2 text-sm font-medium">{{ selectedVendor.foundedDate || 'N/A' }}</span>
               </div>
               <div class="grid grid-cols-3 gap-2">
                 <span class="text-sm text-muted-foreground">Country:</span>
@@ -488,10 +462,11 @@ onMounted(() => {
             </CardContent>
           </Card>
 
-          <!-- Additional Information -->
           <Card>
             <CardHeader>
-              <h3 class="text-lg font-semibold">Additional Information</h3>
+              <h3 class="text-lg font-semibold">
+                Additional Information
+              </h3>
             </CardHeader>
             <CardContent class="space-y-3">
               <div class="grid grid-cols-3 gap-2">
@@ -505,10 +480,10 @@ onMounted(() => {
             </CardContent>
           </Card>
 
-          <!-- Action Buttons -->
           <div class="flex gap-2 pt-4">
-            <Button class="flex-1">Edit Institution</Button>
-            <Button variant="outline" class="flex-1" @click="isSheetOpen = false">Close</Button>
+            <Button variant="outline" class="flex-1" @click="isSheetOpen = false">
+              Close
+            </Button>
           </div>
         </div>
       </SheetContent>

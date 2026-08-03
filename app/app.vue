@@ -24,8 +24,8 @@ useHead({
   },
 })
 
-const title = 'Intelligent Building Solutions'
-const description = 'ERP system for intelligent building solutions, providing comprehensive management and automation features to optimize building operations and enhance occupant experience.'
+const title = 'Ingenicx'
+const description = 'Ingenicx ERP — comprehensive management and automation features to optimize operations and enhance customer experience.'
 
 useSeoMeta({
   title,
@@ -62,11 +62,11 @@ const dir = computed(() => textDirection.value === 'rtl' ? 'rtl' : 'ltr')
         <!-- <AppSettings /> -->
       </div>
 
-      <Toaster 
-        position="top-right" 
-        :close-button="true" 
+      <Toaster
+        position="top-right"
+        :close-button="true"
         :close-button-color="colorMode.value === 'dark' ? '#fff' : '#000'"
-        :theme="colorMode.preference as any || 'system'" 
+        :theme="colorMode.preference as any || 'system'"
       />
     </ConfigProvider>
   </Body>

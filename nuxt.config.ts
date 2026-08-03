@@ -1,5 +1,5 @@
-import { defineNuxtConfig } from 'nuxt/config'
 import tailwindcss from '@tailwindcss/vite'
+import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },

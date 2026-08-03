@@ -1,32 +1,33 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { columns } from '@/components/tasks/components/columns'
-import DataTable from '@/components/tasks/components/DataTable.vue'
-import tasksData from '@/components/tasks/data/tasks.json'
-import type { Task } from '@/components/tasks/data/schema'
-import SupportChatSheet from '@/components/Customer/SupportChatSheet.vue'
+import { toast } from 'vue-sonner'
 
-const tasks = ref(tasksData.data)
+const requestUrl = useRequestURL()
+const supportLink = computed(() => `${requestUrl.origin}/support`)
 
+const table = ref<{ refresh: () => Promise<void> } | null>(null)
+const selectedTicketId = ref<string | null>(null)
 const isSheetOpen = ref(false)
-const selectedTask = ref<Task | null>(null)
 
-function handleRowClick(task: Task) {
-  selectedTask.value = task
+interface TicketRow {
+  id: string
+}
+
+function openTicket(ticket: TicketRow) {
+  selectedTicketId.value = ticket.id
   isSheetOpen.value = true
 }
 
-function handleSheetClose(value: boolean) {
-  isSheetOpen.value = value
-  if (!value) {
-    selectedTask.value = null
-  }
+function onTicketChanged() {
+  table.value?.refresh()
 }
 
-function handleTaskUpdate(updatedTask: Task) {
-  const index = tasks.value.findIndex(t => t.id === updatedTask.id)
-  if (index !== -1) {
-    tasks.value.splice(index, 1, updatedTask)
+async function copySupportLink() {
+  try {
+    await navigator.clipboard.writeText(supportLink.value)
+    toast.success('Support link copied to clipboard')
+  }
+  catch {
+    toast.error('Could not copy link')
   }
 }
 </script>
@@ -39,20 +40,21 @@ function handleTaskUpdate(updatedTask: Task) {
           Customer Support
         </h2>
         <p class="text-muted-foreground">
-          Here&apos;s a list of customer support tasks!
+          Tickets submitted by clients through your public support link.
         </p>
       </div>
+      <Button variant="outline" @click="copySupportLink">
+        <Icon name="i-lucide-link" />
+        Copy Support Link
+      </Button>
     </div>
-    <DataTable :data="tasks" :columns="columns" @row-click="handleRowClick" />
-    <SupportChatSheet
-      :open="isSheetOpen"
-      :task="selectedTask"
-      @update:open="handleSheetClose"
-      @update:task="handleTaskUpdate"
+
+    <CustomerSupportTicketTable ref="table" @select="openTicket" />
+
+    <CustomerSupportTicketDetailSheet
+      v-model:open="isSheetOpen"
+      :ticket-id="selectedTicketId"
+      @changed="onTicketChanged"
     />
   </div>
 </template>
-
-<style scoped>
-
-</style>

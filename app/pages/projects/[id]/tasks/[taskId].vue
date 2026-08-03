@@ -202,15 +202,21 @@ function goBack() {
           <Icon name="i-lucide-arrow-left" />
         </Button>
         <div class="flex items-center gap-2 min-w-0">
-          <Badge variant="secondary">{{ current.task?.id }}</Badge>
+          <Badge variant="secondary">
+            {{ current.task?.id }}
+          </Badge>
           <Input v-model="title" class="min-w-[240px]" placeholder="Task title" />
         </div>
       </div>
       <div class="flex items-center gap-2">
         <Select v-model="status">
-          <SelectTrigger class="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger class="w-[180px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
-            <SelectItem v-for="c in board.columns" :key="c.id" :value="c.id">{{ c.title }}</SelectItem>
+            <SelectItem v-for="c in board.columns" :key="c.id" :value="c.id">
+              {{ c.title }}
+            </SelectItem>
           </SelectContent>
         </Select>
         <Button @click="saveTask">
@@ -257,7 +263,9 @@ function goBack() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-56">
-              <div class="px-2 py-1.5 text-xs text-muted-foreground">Staff</div>
+              <div class="px-2 py-1.5 text-xs text-muted-foreground">
+                Staff
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
                 v-for="m in members"
@@ -281,15 +289,23 @@ function goBack() {
       <Card class="lg:col-span-2">
         <CardHeader class="flex items-center justify-between">
           <CardTitle>Subtasks</CardTitle>
-          <Button size="sm" variant="outline" @click="openNewSubtask"><Icon name="lucide:plus" /> Add subtask</Button>
+          <Button size="sm" variant="outline" @click="openNewSubtask">
+            <Icon name="lucide:plus" /> Add subtask
+          </Button>
         </CardHeader>
         <CardContent>
-          <div v-if="!subtasks.length" class="text-sm text-muted-foreground">No subtasks yet.</div>
+          <div v-if="!subtasks.length" class="text-sm text-muted-foreground">
+            No subtasks yet.
+          </div>
           <ul class="space-y-2">
             <li v-for="(s, i) in subtasks" :key="s.id" class="flex items-center gap-2 group">
               <Checkbox :checked="s.done" @update:checked="() => toggleSubtask(i)" />
-              <button class="text-sm flex-1 text-left truncate hover:underline" @click="openEditSubtask(i)">{{ s.title }}</button>
-              <Button size="icon-sm" variant="ghost" class="opacity-0 group-hover:opacity-100" title="Delete" @click="removeSubtask(i)"><Icon name="lucide:trash-2" /></Button>
+              <button class="text-sm flex-1 text-left truncate hover:underline" @click="openEditSubtask(i)">
+                {{ s.title }}
+              </button>
+              <Button size="icon-sm" variant="ghost" class="opacity-0 group-hover:opacity-100" title="Delete" @click="removeSubtask(i)">
+                <Icon name="lucide:trash-2" />
+              </Button>
             </li>
           </ul>
         </CardContent>
@@ -304,28 +320,36 @@ function goBack() {
             <Textarea v-model="commentDraft" rows="3" placeholder="Write a comment..." />
           </div>
           <div class="flex items-center gap-2">
-            <input ref="commentFileInput" type="file" class="hidden" accept="image/*" multiple @change="onCommentImagesSelected" />
+            <input ref="commentFileInput" type="file" class="hidden" accept="image/*" multiple @change="onCommentImagesSelected">
             <Button size="sm" variant="outline" @click="commentFileInput?.click()">
               <Icon name="lucide:paperclip" /> Attach images
             </Button>
           </div>
           <div v-if="commentImages.length" class="grid grid-cols-4 gap-2">
             <div v-for="img in commentImages" :key="img.id" class="relative group border rounded overflow-hidden">
-              <img v-if="img.url" :src="img.url" alt="preview" class="w-full h-20 object-cover" />
+              <img v-if="img.url" :src="img.url" alt="preview" class="w-full h-20 object-cover">
               <button class="absolute top-1 right-1 bg-background/80 rounded p-0.5 opacity-0 group-hover:opacity-100 transition" title="Remove" @click="removePendingImage(img.id)">
                 <Icon name="lucide:x" class="w-4 h-4" />
               </button>
             </div>
           </div>
           <div class="flex justify-end">
-            <Button size="sm" :disabled="!commentDraft.trim() && !commentImages.length" @click="addComment"><Icon name="i-lucide-send" /> Add</Button>
+            <Button size="sm" :disabled="!commentDraft.trim() && !commentImages.length" @click="addComment">
+              <Icon name="i-lucide-send" /> Add
+            </Button>
           </div>
           <Separator />
-          <div v-if="!comments.length" class="text-sm text-muted-foreground">No comments yet.</div>
+          <div v-if="!comments.length" class="text-sm text-muted-foreground">
+            No comments yet.
+          </div>
           <ul class="space-y-3">
             <li v-for="c in comments" :key="c.id" class="rounded-md border p-2">
-              <div class="text-xs text-muted-foreground">{{ new Date(c.createdAt).toLocaleString() }} — {{ c.author?.name || 'User' }}</div>
-              <div class="text-sm whitespace-pre-wrap">{{ c.body }}</div>
+              <div class="text-xs text-muted-foreground">
+                {{ new Date(c.createdAt).toLocaleString() }} — {{ c.author?.name || 'User' }}
+              </div>
+              <div class="text-sm whitespace-pre-wrap">
+                {{ c.body }}
+              </div>
               <div v-if="c.attachments?.length" class="mt-2 grid grid-cols-3 gap-2">
                 <a
                   v-for="att in c.attachments"
@@ -335,7 +359,7 @@ function goBack() {
                   rel="noreferrer"
                   class="block border rounded overflow-hidden"
                 >
-                  <img v-if="att.isImage && att.url" :src="att.url" :alt="att.name" class="w-full h-24 object-cover" />
+                  <img v-if="att.isImage && att.url" :src="att.url" :alt="att.name" class="w-full h-24 object-cover">
                   <div v-else class="p-2 text-xs flex items-center gap-1 truncate">
                     <Icon name="lucide:file" /> {{ att.name }}
                   </div>
@@ -359,10 +383,14 @@ function goBack() {
         </div>
         <div class="flex items-center gap-2">
           <DialogClose as-child>
-            <Button variant="secondary">Cancel</Button>
+            <Button variant="secondary">
+              Cancel
+            </Button>
           </DialogClose>
           <DialogClose as-child>
-            <Button :disabled="!subtaskTitle.trim()" @click="saveSubtask">Save</Button>
+            <Button :disabled="!subtaskTitle.trim()" @click="saveSubtask">
+              Save
+            </Button>
           </DialogClose>
         </div>
       </DialogContent>

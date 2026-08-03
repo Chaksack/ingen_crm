@@ -29,10 +29,10 @@ function handleSelectCompany(id: string) {
 
 <template>
   <div as-child tooltip="Search">
-    <Button 
-      variant="outline" 
-      size="sm" 
-      class="text-xs" 
+    <Button
+      variant="outline"
+      size="sm"
+      class="text-xs"
       @click="openCommand = !openCommand"
     >
       <Icon name="i-lucide-search" />
@@ -50,21 +50,21 @@ function handleSelectCompany(id: string) {
     <CommandInput placeholder="Type a user's name or GhcardID/Business Registration Number..." />
     <CommandList>
       <CommandEmpty>No results found.</CommandEmpty>
-      
+
       <CommandGroup heading="Customers">
         <CommandItem value="john-snow" @select="handleSelectCustomer('1')">
-          John Snow 
+          John Snow
         </CommandItem>
         <CommandItem value="william-apnoch" @select="handleSelectCustomer('2')">
           William Apnoch
         </CommandItem>
       </CommandGroup>
-      
+
       <CommandSeparator />
-      
+
       <CommandGroup heading="Companies">
         <CommandItem value="acme-corporation" @select="handleSelectCompany('1')">
-          ACME Corporation 
+          ACME Corporation
         </CommandItem>
         <CommandItem value="globex-inc" @select="handleSelectCompany('2')">
           Globex Inc.

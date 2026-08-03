@@ -20,7 +20,9 @@ const { setOpenMobile } = useSidebar()
         <NuxtLink :to="item.link" @click="setOpenMobile(false)">
           <Icon :name="item.icon || ''" />
           <span>{{ item.title }}</span>
-          <Badge v-if="item.label" class="rounded-md px-1 text-xs leading-none no-underline group-hover:no-underline">{{ item.label }}</Badge>
+          <Badge v-if="item.label" class="rounded-md px-1 text-xs leading-none no-underline group-hover:no-underline">
+            {{ item.label }}
+          </Badge>
         </NuxtLink>
       </SidebarMenuButton>
     </SidebarMenuItem>

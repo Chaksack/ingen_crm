@@ -3,46 +3,48 @@ import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 interface StaffForm {
-  first_name: string
-  last_name: string
+  firstName: string
+  lastName: string
   email: string
-  phone_number: string
+  phoneNumber: string
   role: string
   status: 'active' | 'inactive'
+  createLogin: boolean
 }
 
+const emit = defineEmits<{ created: [] }>()
+const { user: authUser } = useAuth()
+const isAdmin = computed(() => authUser.value?.role === 'admin')
+
 const form = ref<StaffForm>({
-  first_name: '',
-  last_name: '',
+  firstName: '',
+  lastName: '',
   email: '',
-  phone_number: '',
+  phoneNumber: '',
   role: 'Staff',
   status: 'active',
+  createLogin: true,
 })
 
 const isSubmitting = ref(false)
-const success = ref(false)
 
 async function handleSubmit() {
-  if (!form.value.first_name || !form.value.last_name || !form.value.email) {
+  if (!form.value.firstName || !form.value.lastName || !form.value.email) {
     toast.error('Please fill in first name, last name and email')
     return
   }
 
   isSubmitting.value = true
-  success.value = false
   try {
-    // TODO: Replace with real API request
-    await new Promise(resolve => setTimeout(resolve, 600))
-    success.value = true
-    toast.success('Staff created (mock)')
-    // Reset basic fields
-    form.value.first_name = ''
-    form.value.last_name = ''
-    form.value.email = ''
-    form.value.phone_number = ''
-    form.value.role = 'Staff'
-    form.value.status = 'active'
+    await $fetch('/api/staff', {
+      method: 'POST',
+      body: { ...form.value, createLogin: isAdmin.value && form.value.createLogin },
+    })
+    toast.success(isAdmin.value && form.value.createLogin ? 'Staff created and invite sent' : 'Staff created')
+    emit('created')
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Failed to create staff')
   }
   finally {
     isSubmitting.value = false
@@ -55,11 +57,11 @@ async function handleSubmit() {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="space-y-2">
         <Label for="firstName">First name</Label>
-        <Input id="firstName" v-model="form.first_name" placeholder="Jane" />
+        <Input id="firstName" v-model="form.firstName" placeholder="Jane" />
       </div>
       <div class="space-y-2">
         <Label for="lastName">Last name</Label>
-        <Input id="lastName" v-model="form.last_name" placeholder="Doe" />
+        <Input id="lastName" v-model="form.lastName" placeholder="Doe" />
       </div>
     </div>
 
@@ -70,7 +72,7 @@ async function handleSubmit() {
       </div>
       <div class="space-y-2">
         <Label for="phone">Phone</Label>
-        <Input id="phone" v-model="form.phone_number" placeholder="+233 555 123 456" />
+        <Input id="phone" v-model="form.phoneNumber" placeholder="+233 555 123 456" />
       </div>
     </div>
 
@@ -82,9 +84,15 @@ async function handleSubmit() {
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Staff">Staff</SelectItem>
-            <SelectItem value="Manager">Manager</SelectItem>
-            <SelectItem value="Admin">Admin</SelectItem>
+            <SelectItem value="Staff">
+              Staff
+            </SelectItem>
+            <SelectItem value="Manager">
+              Manager
+            </SelectItem>
+            <SelectItem value="Admin">
+              Admin
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -95,11 +103,20 @@ async function handleSubmit() {
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="active">
+              Active
+            </SelectItem>
+            <SelectItem value="inactive">
+              Inactive
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
+    </div>
+
+    <div v-if="isAdmin" class="flex items-center gap-2">
+      <Checkbox id="createLogin" v-model="form.createLogin" />
+      <Label for="createLogin">Give this staff member login access (emails them an invite to set their password)</Label>
     </div>
 
     <div class="flex items-center gap-2 pt-2">
@@ -107,7 +124,6 @@ async function handleSubmit() {
         <Icon v-if="isSubmitting" name="i-lucide-loader-2" class="mr-2 animate-spin" />
         Save Staff
       </Button>
-      <p v-if="success" class="text-green-600 text-sm">Staff created (mock).</p>
     </div>
   </form>
 </template>

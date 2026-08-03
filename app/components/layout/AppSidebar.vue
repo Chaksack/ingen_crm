@@ -15,21 +15,19 @@ const teams: {
   plan: string
 }[] = [
   {
-    name: 'IBS',
+    name: 'Ingenicx',
     logo: 'i-lucide-gallery-vertical-end',
     plan: 'Business',
   },
 ]
 
-const user: {
-  name: string
-  email: string
-  avatar: string
-} = {
-  name: 'Andrew Chakdahah',
-  email: 'business@ibsgh.com',
-  avatar: '/avatars/avatartion.png',
-}
+const { user: authUser } = useAuth()
+
+const user = computed(() => ({
+  name: authUser.value?.name ?? '',
+  email: authUser.value?.email ?? '',
+  avatar: authUser.value?.avatar ?? '',
+}))
 
 const { sidebar } = useAppSettings()
 </script>

@@ -1,24 +1,29 @@
 <script setup lang="ts">
 import { Loader2 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import PasswordInput from '~/components/PasswordInput.vue'
 
-const email = ref('demo@gmail.com')
-const password = ref('password')
+const email = ref('')
+const password = ref('')
 const isLoading = ref(false)
+const { login } = useAuth()
 
-function onSubmit(event: Event) {
+async function onSubmit(event: Event) {
   event.preventDefault()
   if (!email.value || !password.value)
     return
 
   isLoading.value = true
-
-  setTimeout(() => {
-    if (email.value === 'demo@gmail.com' && password.value === 'password')
-      navigateTo('/otp')
-
+  try {
+    await login(email.value, password.value)
+    await navigateTo('/otp')
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Invalid email or password')
+  }
+  finally {
     isLoading.value = false
-  }, 3000)
+  }
 }
 </script>
 

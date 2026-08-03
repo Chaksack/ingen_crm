@@ -22,7 +22,7 @@ const STORAGE_KEY = 'projects.v1'
 
 const defaultMembers: Member[] = [
   { id: 'u_self', name: 'Andrew Chakdahah', avatar: '/avatars/avatartion.png' },
-  { id: 'u_1', name: 'IBS Support', avatar: '/avatars/03.png' },
+  { id: 'u_1', name: 'Ingenicx Support', avatar: '/avatars/03.png' },
   { id: 'u_2', name: 'Accounting', avatar: '/avatars/02.png' },
 ]
 
@@ -46,7 +46,7 @@ export function useProjects() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(projects.value))
   }
 
-  function createProject(input: { name: string; key?: string; description?: string; leadId?: string; memberIds?: string[]; customerName?: string; boards?: string[] }) {
+  function createProject(input: { name: string, key?: string, description?: string, leadId?: string, memberIds?: string[], customerName?: string, boards?: string[] }) {
     const id = nanoid(8)
     const key = (input.key || input.name).toUpperCase().replace(/\s+/g, '-').slice(0, 10)
     const p: Project = {

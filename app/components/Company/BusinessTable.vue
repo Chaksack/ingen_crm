@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import {
   AlertCircle,
-  X,
   ChevronDown,
   Search,
 } from 'lucide-vue-next'
 
+import { computed, ref } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -25,15 +23,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ref, computed, onMounted } from 'vue'
-import { useNuxtApp } from '#app'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert'
-import { toast } from 'vue-sonner'
-import { AvatarImage, Avatar, AvatarFallback } from '~/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 
-const businesses = ref<any[]>([])
-const isLoading = ref(false)
-const error = ref<string | null>(null)
+interface Business {
+  id: string
+  avatar?: string
+  companyName: string
+  capital?: string
+  foundedYear?: number
+  email: string
+  phoneNumber?: string
+  status: 'active' | 'inactive' | 'pending'
+  creditScore?: number
+}
+
+const { data: businessesData, pending: isLoading, error, refresh } = useFetch<Business[]>('/api/businesses')
+const businesses = computed(() => businessesData.value ?? [])
 const searchQuery = ref<string>('')
 const statusFilter = ref<string>('all')
 const currentPage = ref(1)
@@ -61,8 +69,8 @@ const filteredBusinesses = computed(() => {
   if (searchQuery.value) {
     filtered = filtered.filter(business =>
       Object.values(business).some(value =>
-        String(value).toLowerCase().includes(searchQuery.value.toLowerCase())
-      )
+        String(value).toLowerCase().includes(searchQuery.value.toLowerCase()),
+      ),
     )
   }
 
@@ -83,48 +91,30 @@ const paginatedBusinesses = computed(() => {
   return filteredBusinesses.value.slice(start, end)
 })
 
-const goToPage = (page: number) => {
+function goToPage(page: number) {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
   }
 }
 
-const nextPage = () => {
+function nextPage() {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
   }
 }
 
-const prevPage = () => {
+function prevPage() {
   if (currentPage.value > 1) {
     currentPage.value--
   }
 }
 
 // Reset to page 1 when filters change
-const resetPage = () => {
+function resetPage() {
   currentPage.value = 1
 }
 
-const fetchBusiness = async () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const nuxtApp = useNuxtApp()
-    const response = await nuxtApp.$axios.get('http://localhost:8080/api/businesses', {
-      withCredentials: true,
-    })
-    businesses.value = response.data
-  } catch (err) {
-    error.value = 'Failed to load business data.'
-    toast.error('Error fetching business: ' + (err as Error).message)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const getBadgeVariant = (status: string) => {
+function getBadgeVariant(status: string) {
   switch (status) {
     case 'active':
       return 'default'
@@ -137,37 +127,18 @@ const getBadgeVariant = (status: string) => {
   }
 }
 
-const closeAlert = () => {
-  error.value = null
-}
-
-onMounted(() => {
-  fetchBusiness()
-})
+defineExpose({ refresh })
 </script>
 
 <template>
   <div>
     <main class="@container/main flex flex-1 flex-col gap-4 md:gap-8">
-      <Alert
-        v-if="error"
-        variant="default"
-        class="alert bg-red-800 text-white relative"
-      >
-        <AlertCircle class="w-8 h-8" />
-        <AlertTitle class="mx-4 font-bold">Error:</AlertTitle>
-        <AlertDescription class="mx-4 text-white">{{ error }}</AlertDescription>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          class="absolute top-2 right-2 h-6 w-6 text-white hover:bg-red-700"
-          @click="closeAlert"
-        >
-          <X class="h-4 w-4" />
-        </Button>
+      <Alert v-if="error" variant="destructive">
+        <AlertCircle class="w-4 h-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Failed to load businesses.</AlertDescription>
       </Alert>
-      
+
       <Card>
         <CardHeader>
           <div class="flex flex-col gap-4">
@@ -191,10 +162,18 @@ onMounted(() => {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="all">
+                      All Status
+                    </SelectItem>
+                    <SelectItem value="active">
+                      Active
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      Inactive
+                    </SelectItem>
+                    <SelectItem value="pending">
+                      Pending
+                    </SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -253,39 +232,81 @@ onMounted(() => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead v-if="columnVisibility.id">ID</TableHead>
-                  <TableHead v-if="columnVisibility.avatar">Avatar</TableHead>
-                  <TableHead v-if="columnVisibility.companyName">Company Name</TableHead>
-                  <TableHead v-if="columnVisibility.email">Email</TableHead>
-                  <TableHead v-if="columnVisibility.phoneNumber">Phone Number</TableHead>
-                  <TableHead v-if="columnVisibility.capital">Capital</TableHead>
-                  <TableHead v-if="columnVisibility.foundedYear">Founded Year</TableHead>
-                  <TableHead v-if="columnVisibility.status">Status</TableHead>
-                  <TableHead v-if="columnVisibility.creditScore">Credit Score</TableHead>
-                  <TableHead v-if="columnVisibility.actions">Actions</TableHead>
+                  <TableHead v-if="columnVisibility.id">
+                    ID
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.avatar">
+                    Avatar
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.companyName">
+                    Company Name
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.email">
+                    Email
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.phoneNumber">
+                    Phone Number
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.capital">
+                    Capital
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.foundedYear">
+                    Founded Year
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.status">
+                    Status
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.creditScore">
+                    Credit Score
+                  </TableHead>
+                  <TableHead v-if="columnVisibility.actions">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
 
               <!-- Loading State -->
               <TableBody v-if="isLoading">
                 <TableRow v-for="i in itemsPerPage" :key="`skeleton-${i}`">
-                  <TableCell v-if="columnVisibility.id"><Skeleton class="h-4 w-8" /></TableCell>
-                  <TableCell v-if="columnVisibility.avatar"><Skeleton class="h-10 w-10 rounded-full" /></TableCell>
-                  <TableCell v-if="columnVisibility.companyName"><Skeleton class="h-4 w-24" /></TableCell>
-                  <TableCell v-if="columnVisibility.capital"><Skeleton class="h-4 w-24" /></TableCell>
-                  <TableCell v-if="columnVisibility.foundedYear"><Skeleton class="h-4 w-8" /></TableCell>
-                  <TableCell v-if="columnVisibility.email"><Skeleton class="h-4 w-40" /></TableCell>
-                  <TableCell v-if="columnVisibility.phoneNumber"><Skeleton class="h-4 w-28" /></TableCell>
-                  <TableCell v-if="columnVisibility.status"><Skeleton class="h-6 w-16 rounded-full" /></TableCell>
-                  <TableCell v-if="columnVisibility.creditScore"><Skeleton class="h-4 w-12" /></TableCell>
-                  <TableCell v-if="columnVisibility.actions"><Skeleton class="h-8 w-16 rounded-lg" /></TableCell>
+                  <TableCell v-if="columnVisibility.id">
+                    <Skeleton class="h-4 w-8" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.avatar">
+                    <Skeleton class="h-10 w-10 rounded-full" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.companyName">
+                    <Skeleton class="h-4 w-24" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.capital">
+                    <Skeleton class="h-4 w-24" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.foundedYear">
+                    <Skeleton class="h-4 w-8" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.email">
+                    <Skeleton class="h-4 w-40" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.phoneNumber">
+                    <Skeleton class="h-4 w-28" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.status">
+                    <Skeleton class="h-6 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.creditScore">
+                    <Skeleton class="h-4 w-12" />
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.actions">
+                    <Skeleton class="h-8 w-16 rounded-lg" />
+                  </TableCell>
                 </TableRow>
               </TableBody>
 
               <!-- Data State -->
               <TableBody v-else-if="paginatedBusinesses && paginatedBusinesses.length > 0">
-                <TableRow v-for="business in paginatedBusinesses" :key="business.ID">
-                  <TableCell v-if="columnVisibility.id">{{ business.ID || 'N/A' }}</TableCell>
+                <TableRow v-for="business in paginatedBusinesses" :key="business.id">
+                  <TableCell v-if="columnVisibility.id">
+                    {{ business.id || 'N/A' }}
+                  </TableCell>
                   <TableCell v-if="columnVisibility.avatar">
                     <Avatar class="relative overflow-visible">
                       <AvatarImage class="rounded-full" :src="business.avatar || ''" alt="Business Avatar" />
@@ -299,11 +320,21 @@ onMounted(() => {
                       />
                     </Avatar>
                   </TableCell>
-                  <TableCell v-if="columnVisibility.companyName">{{ business.companyName || 'N/A' }}</TableCell>
-                  <TableCell v-if="columnVisibility.capital">{{ business.capital || 'N/A' }}</TableCell>
-                  <TableCell v-if="columnVisibility.foundedYear">{{ business.foundedYear || 'N/A' }}</TableCell>
-                  <TableCell v-if="columnVisibility.email">{{ business.email || 'N/A' }}</TableCell>
-                  <TableCell v-if="columnVisibility.phoneNumber">{{ business.phoneNumber || 'N/A' }}</TableCell>
+                  <TableCell v-if="columnVisibility.companyName">
+                    {{ business.companyName || 'N/A' }}
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.capital">
+                    {{ business.capital || 'N/A' }}
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.foundedYear">
+                    {{ business.foundedYear || 'N/A' }}
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.email">
+                    {{ business.email || 'N/A' }}
+                  </TableCell>
+                  <TableCell v-if="columnVisibility.phoneNumber">
+                    {{ business.phoneNumber || 'N/A' }}
+                  </TableCell>
                   <TableCell v-if="columnVisibility.status">
                     <Badge :variant="getBadgeVariant(business.status)">
                       {{ business.status || 'N/A' }}
@@ -313,7 +344,7 @@ onMounted(() => {
                     {{ business.creditScore || 'N/A' }}
                   </TableCell>
                   <TableCell v-if="columnVisibility.actions">
-                    <NuxtLink :to="`/company/view/${business.ID}`">
+                    <NuxtLink :to="`/company/view/${business.id}`">
                       <Button size="sm" variant="default">
                         View
                       </Button>
@@ -321,7 +352,7 @@ onMounted(() => {
                   </TableCell>
                 </TableRow>
               </TableBody>
-              
+
               <!-- Empty State -->
               <TableBody v-else>
                 <TableRow>
@@ -334,14 +365,14 @@ onMounted(() => {
                         No Business Data Available
                       </h3>
                       <p class="text-sm max-w-sm">
-                        {{ searchQuery || statusFilter !== 'all' 
-                          ? 'No businesses match your search criteria. Try adjusting your filters.' 
-                          : 'No business data available. Get started by creating your first business.' 
+                        {{ searchQuery || statusFilter !== 'all'
+                          ? 'No businesses match your search criteria. Try adjusting your filters.'
+                          : 'No business data available. Get started by creating your first business.'
                         }}
                       </p>
-                      <Button 
+                      <Button
                         v-if="searchQuery || statusFilter !== 'all'"
-                        variant="outline" 
+                        variant="outline"
                         class="mt-4"
                         @click="searchQuery = ''; statusFilter = 'all'"
                       >
@@ -364,10 +395,18 @@ onMounted(() => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem :value="5">5</SelectItem>
-                <SelectItem :value="10">10</SelectItem>
-                <SelectItem :value="20">20</SelectItem>
-                <SelectItem :value="50">50</SelectItem>
+                <SelectItem :value="5">
+                  5
+                </SelectItem>
+                <SelectItem :value="10">
+                  10
+                </SelectItem>
+                <SelectItem :value="20">
+                  20
+                </SelectItem>
+                <SelectItem :value="50">
+                  50
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -386,7 +425,7 @@ onMounted(() => {
               >
                 Previous
               </Button>
-              
+
               <!-- Page Numbers -->
               <template v-for="page in totalPages" :key="page">
                 <Button
@@ -398,7 +437,7 @@ onMounted(() => {
                 >
                   {{ page }}
                 </Button>
-                <span 
+                <span
                   v-else-if="page === currentPage - 2 || page === currentPage + 2"
                   class="flex items-center px-2"
                 >

@@ -16,16 +16,16 @@ export interface Task {
   labels?: string[]
   createdAt: Date | number | string
   // Subtasks/checklist
-  subtasks?: Array<{ id: string; title: string; done: boolean }>
+  subtasks?: Array<{ id: string, title: string, done: boolean }>
   // Basic attachments metadata for uploads/images
-  attachments?: Array<{ id: string; name: string; size: number; type: string; isImage: boolean; url?: string }>
+  attachments?: Array<{ id: string, name: string, size: number, type: string, isImage: boolean, url?: string }>
   // Simple comments thread
   comments?: Array<{
     id: string
-    author: { id: string; name: string; avatar?: string }
+    author: { id: string, name: string, avatar?: string }
     body: string
     createdAt: Date | number | string
-    attachments?: Array<{ id: string; name: string; size: number; type: string; isImage: boolean; url?: string }>
+    attachments?: Array<{ id: string, name: string, size: number, type: string, isImage: boolean, url?: string }>
   }>
   parentId?: string | null
   order?: number

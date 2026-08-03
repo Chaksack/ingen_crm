@@ -69,10 +69,16 @@ const empty = computed(() => dated.value.length === 0)
   <div class="flex flex-col gap-3">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="font-semibold text-lg">Gantt — {{ project?.name }}</h3>
-        <p class="text-sm text-muted-foreground" v-if="project?.customerName">Customer: {{ project?.customerName }}</p>
+        <h3 class="font-semibold text-lg">
+          Gantt — {{ project?.name }}
+        </h3>
+        <p v-if="project?.customerName" class="text-sm text-muted-foreground">
+          Customer: {{ project?.customerName }}
+        </p>
       </div>
-      <Badge v-if="project?.key" variant="secondary">{{ project?.key }}</Badge>
+      <Badge v-if="project?.key" variant="secondary">
+        {{ project?.key }}
+      </Badge>
     </div>
 
     <div v-if="empty" class="rounded-md border p-6 text-sm text-muted-foreground">
@@ -82,7 +88,9 @@ const empty = computed(() => dated.value.length === 0)
     <div v-else class="rounded-md border overflow-hidden">
       <!-- Header timeline scale -->
       <div class="grid bg-muted/50 text-xs text-muted-foreground" :style="{ gridTemplateColumns: `200px repeat(${days.length}, 1fr)` }">
-        <div class="p-2 font-medium bg-background">Task</div>
+        <div class="p-2 font-medium bg-background">
+          Task
+        </div>
         <div v-for="d in days" :key="d.toISOString()" class="p-2 text-center border-l">
           {{ d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }}
         </div>
@@ -91,8 +99,12 @@ const empty = computed(() => dated.value.length === 0)
       <div class="divide-y">
         <div v-for="t in dated" :key="t.id" class="grid items-stretch" :style="{ gridTemplateColumns: `200px repeat(${days.length}, 1fr)` }">
           <div class="p-2 flex items-center gap-2 min-w-0">
-            <div class="shrink-0 text-xs text-muted-foreground">{{ t.id }}</div>
-            <div class="truncate">{{ t.title }}</div>
+            <div class="shrink-0 text-xs text-muted-foreground">
+              {{ t.id }}
+            </div>
+            <div class="truncate">
+              {{ t.title }}
+            </div>
           </div>
           <div class="relative col-span-full">
             <div class="relative h-10">

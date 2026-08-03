@@ -10,9 +10,10 @@ defineProps<{
 }>()
 
 const { isMobile, setOpenMobile } = useSidebar()
+const { logout } = useAuth()
 
-function handleLogout() {
-  navigateTo('/')
+async function handleLogout() {
+  await logout()
 }
 
 const showModalTheme = ref(false)
@@ -45,13 +46,12 @@ const showModalTheme = ref(false)
           :side="isMobile ? 'bottom' : 'right'"
           align="end"
         >
-               
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem>
               <NuxtLink to="/settings/profile" @click="setOpenMobile(false)">
                 <Icon name="i-lucide-badge-check" />
-              Profile
+                Profile
               </NuxtLink>
             </DropdownMenuItem>
             <DropdownMenuItem as-child>

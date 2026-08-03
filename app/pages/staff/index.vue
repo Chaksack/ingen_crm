@@ -1,5 +1,11 @@
 <script setup lang="ts">
+const isSheetOpen = ref(false)
+const table = ref<{ refresh: () => Promise<void> } | null>(null)
 
+function onCreated() {
+  isSheetOpen.value = false
+  table.value?.refresh()
+}
 </script>
 
 <template>
@@ -9,7 +15,7 @@
         Staff
       </h2>
       <div class="flex items-center space-x-2">
-        <Sheet>
+        <Sheet v-model:open="isSheetOpen">
           <SheetTrigger as-child>
             <Button>
               <Icon name="i-lucide-plus" />
@@ -23,13 +29,13 @@
                 Fill in the details to create a new staff member.
               </SheetDescription>
             </SheetHeader>
-            <StaffCreateStaff />
+            <StaffCreateStaff @created="onCreated" />
           </SheetContent>
         </Sheet>
       </div>
     </div>
     <main>
-      <StaffUserTable />
+      <StaffUserTable ref="table" />
     </main>
   </div>
 </template>

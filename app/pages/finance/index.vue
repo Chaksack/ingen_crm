@@ -1,34 +1,67 @@
 <script setup lang="ts">
+interface FinanceSummary {
+  outstandingBalance: number
+  invoicedThisMonth: number
+  collectedThisMonth: number
+  expensesThisMonth: number
+  openQuotations: number
+}
 
+const { data: summary, pending: isLoading } = await useFetch<FinanceSummary>('/api/finance/summary')
+
+function formatMoney(value: number | undefined) {
+  return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value ?? 0)
+}
 </script>
 
 <template>
-  <div class="w-full flex flex-col gap-4">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-2xl font-bold tracking-tight">
-        Financial Institutions
-      </h2>
-     <div class="flex items-center space-x-2">
-       <Sheet>
-    <SheetTrigger as-child>
-        <Button>
-          <Icon name="i-lucide-plus" class="" />
-          New Financial Institution</Button>
-        </SheetTrigger>
-        <SheetContent class="w-1/2 rounded-l-lg sm:max-w-none overflow-y-auto ">
-          <SheetHeader>
-            <SheetTitle>Create New Financial Institution</SheetTitle>
-            <SheetDescription>
-              Fill in the details to create a new financial institution.
-            </SheetDescription>
-          </SheetHeader>
-          <FICreateFinancialInstitution />
-        </SheetContent>
-      </Sheet>
-      </div>
+  <FinanceLayout>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <Card>
+        <CardHeader class="pb-2">
+          <CardDescription>Outstanding Balance</CardDescription>
+          <CardTitle class="text-2xl">
+            <Skeleton v-if="isLoading" class="h-8 w-32" />
+            <span v-else>{{ formatMoney(summary?.outstandingBalance) }}</span>
+          </CardTitle>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader class="pb-2">
+          <CardDescription>Invoiced This Month</CardDescription>
+          <CardTitle class="text-2xl">
+            <Skeleton v-if="isLoading" class="h-8 w-32" />
+            <span v-else>{{ formatMoney(summary?.invoicedThisMonth) }}</span>
+          </CardTitle>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader class="pb-2">
+          <CardDescription>Collected This Month</CardDescription>
+          <CardTitle class="text-2xl">
+            <Skeleton v-if="isLoading" class="h-8 w-32" />
+            <span v-else>{{ formatMoney(summary?.collectedThisMonth) }}</span>
+          </CardTitle>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader class="pb-2">
+          <CardDescription>Expenses This Month</CardDescription>
+          <CardTitle class="text-2xl">
+            <Skeleton v-if="isLoading" class="h-8 w-32" />
+            <span v-else>{{ formatMoney(summary?.expensesThisMonth) }}</span>
+          </CardTitle>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader class="pb-2">
+          <CardDescription>Open Quotations</CardDescription>
+          <CardTitle class="text-2xl">
+            <Skeleton v-if="isLoading" class="h-8 w-16" />
+            <span v-else>{{ summary?.openQuotations ?? 0 }}</span>
+          </CardTitle>
+        </CardHeader>
+      </Card>
     </div>
-    <main>
-      <FIFinancialInstitutionTable />
-    </main>
-  </div>
+  </FinanceLayout>
 </template>

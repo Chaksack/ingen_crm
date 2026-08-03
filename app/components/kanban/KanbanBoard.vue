@@ -500,7 +500,9 @@ defineExpose({ addColumnExternal, board })
                     {{ t.title }}
                   </p>
                   <div v-if="t.labels?.length" class="mt-3 flex items-center gap-1.5">
-                    <Badge v-for="lb in t.labels" :key="lb" variant="outline">{{ lb }}</Badge>
+                    <Badge v-for="lb in t.labels" :key="lb" variant="outline">
+                      {{ lb }}
+                    </Badge>
                   </div>
                   <div class="mt-3 flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
@@ -591,7 +593,9 @@ defineExpose({ addColumnExternal, board })
               <SelectValue placeholder="Select status/column" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem v-for="c in board.columns" :key="c.id" :value="c.id as any">{{ c.title }}</SelectItem>
+              <SelectItem v-for="c in board.columns" :key="c.id" :value="c.id as any">
+                {{ c.title }}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Label>Parent Task</Label>
@@ -600,12 +604,16 @@ defineExpose({ addColumnExternal, board })
               <SelectValue placeholder="No parent" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem :value="null as any">None</SelectItem>
+              <SelectItem :value="null as any">
+                None
+              </SelectItem>
               <SelectItem
                 v-for="opt in board.columns.flatMap(c => c.tasks).filter(t => t.id !== showModalTask.taskId)"
                 :key="opt.id"
                 :value="opt.id as any"
-              >{{ opt.id }} — {{ opt.title }}</SelectItem>
+              >
+                {{ opt.id }} — {{ opt.title }}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Label>Assignees</Label>
@@ -630,7 +638,9 @@ defineExpose({ addColumnExternal, board })
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-56">
-              <div class="px-2 py-1.5 text-xs text-muted-foreground">Staff</div>
+              <div class="px-2 py-1.5 text-xs text-muted-foreground">
+                Staff
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
                 v-for="m in members"
@@ -737,13 +747,17 @@ defineExpose({ addColumnExternal, board })
           <Label>Attachments</Label>
           <div class="space-y-2">
             <div class="flex items-center gap-2">
-              <Button variant="outline" size="sm" @click="fileInput?.click()"><Icon name="i-lucide-paperclip" /> Add Files</Button>
-              <input ref="fileInput" type="file" class="hidden" multiple @change="(e: any) => onFilesSelected(e)" />
+              <Button variant="outline" size="sm" @click="fileInput?.click()">
+                <Icon name="i-lucide-paperclip" /> Add Files
+              </Button>
+              <input ref="fileInput" type="file" class="hidden" multiple @change="(e: any) => onFilesSelected(e)">
             </div>
             <div v-if="attachments.length" class="flex flex-wrap gap-2">
               <div v-for="att in attachments" :key="att.id" class="rounded border p-1">
-                <img v-if="att.isImage && att.url" :src="att.url" :alt="att.name" class="max-h-16 object-contain" />
-                <div v-else class="text-sm flex items-center gap-2"><Icon name="i-lucide-file" /> {{ att.name }}</div>
+                <img v-if="att.isImage && att.url" :src="att.url" :alt="att.name" class="max-h-16 object-contain">
+                <div v-else class="text-sm flex items-center gap-2">
+                  <Icon name="i-lucide-file" /> {{ att.name }}
+                </div>
               </div>
             </div>
           </div>
@@ -754,11 +768,15 @@ defineExpose({ addColumnExternal, board })
               <span class="text-xs text-muted-foreground"> • {{ new Date(c.createdAt).toLocaleString() }}</span>
               <p>{{ c.body }}</p>
             </div>
-            <div v-if="comments.length === 0" class="text-xs text-muted-foreground">No comments yet.</div>
+            <div v-if="comments.length === 0" class="text-xs text-muted-foreground">
+              No comments yet.
+            </div>
           </div>
           <div class="col-span-3 md:col-start-2 flex items-end gap-2">
             <Textarea v-model="commentDraft" placeholder="Write a comment..." rows="2" />
-            <Button size="sm" :disabled="!commentDraft.trim()" @click="addComment"><Icon name="i-lucide-send" /> Add</Button>
+            <Button size="sm" :disabled="!commentDraft.trim()" @click="addComment">
+              <Icon name="i-lucide-send" /> Add
+            </Button>
           </div>
         </div>
       </div>
@@ -786,8 +804,12 @@ defineExpose({ addColumnExternal, board })
         </div>
       </div>
       <DialogFooter>
-        <Button variant="secondary" @click="openSubtask = false">Cancel</Button>
-        <Button :disabled="!subtaskForm.title.trim()" @click="saveSubtask">Save</Button>
+        <Button variant="secondary" @click="openSubtask = false">
+          Cancel
+        </Button>
+        <Button :disabled="!subtaskForm.title.trim()" @click="saveSubtask">
+          Save
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -806,8 +828,12 @@ defineExpose({ addColumnExternal, board })
         </div>
       </div>
       <DialogFooter>
-        <Button variant="secondary" @click="openAddColumn = false">Cancel</Button>
-        <Button :disabled="!newColumnTitle.trim()" @click="handleAddColumn">Add</Button>
+        <Button variant="secondary" @click="openAddColumn = false">
+          Cancel
+        </Button>
+        <Button :disabled="!newColumnTitle.trim()" @click="handleAddColumn">
+          Add
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

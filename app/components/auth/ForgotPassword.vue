@@ -1,14 +1,28 @@
 <script setup lang="ts">
 import { Loader2 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
+const email = ref('')
 const isLoading = ref(false)
+const { forgotPassword } = useAuth()
+
 async function onSubmit(event: Event) {
   event.preventDefault()
-  isLoading.value = true
+  if (!email.value)
+    return
 
-  setTimeout(() => {
+  isLoading.value = true
+  try {
+    await forgotPassword(email.value)
+    toast.success('If that email exists, a reset code has been sent.')
+    await navigateTo('/otp')
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Something went wrong')
+  }
+  finally {
     isLoading.value = false
-  }, 3000)
+  }
 }
 </script>
 
@@ -21,6 +35,7 @@ async function onSubmit(event: Event) {
         </Label>
         <Input
           id="email"
+          v-model="email"
           placeholder="name@example.com"
           type="email"
           auto-capitalize="none"

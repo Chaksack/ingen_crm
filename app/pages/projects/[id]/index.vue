@@ -143,18 +143,30 @@ const projectMembers = computed(() => members.value.filter(m => (project.value?.
         <Button size="icon" variant="ghost" title="Back" @click="router.push('/projects')">
           <Icon name="i-lucide-arrow-left" />
         </Button>
-        <h2 class="text-xl font-semibold truncate">{{ project?.name || 'Project' }}</h2>
-        <Badge v-if="project?.key" variant="secondary">{{ project?.key }}</Badge>
+        <h2 class="text-xl font-semibold truncate">
+          {{ project?.name || 'Project' }}
+        </h2>
+        <Badge v-if="project?.key" variant="secondary">
+          {{ project?.key }}
+        </Badge>
         <span v-if="project?.customerName" class="text-sm text-muted-foreground truncate">• {{ project?.customerName }}</span>
       </div>
       <div class="flex items-center gap-2">
         <div v-if="summary.total > 0" class="hidden sm:flex items-center gap-2 mr-2">
-          <div class="text-xs text-muted-foreground">Project</div>
-          <Badge variant="secondary" class="font-mono">{{ summary.percent }}%</Badge>
+          <div class="text-xs text-muted-foreground">
+            Project
+          </div>
+          <Badge variant="secondary" class="font-mono">
+            {{ summary.percent }}%
+          </Badge>
         </div>
         <div class="flex items-center gap-1">
-          <Button size="sm" variant="ghost" @click="router.push(`/projects/${pid}/board`)"><Icon name="i-lucide-layout-dashboard" /> Board</Button>
-          <Button size="sm" variant="ghost" @click="router.push(`/projects/${pid}/gantt`)"><Icon name="i-lucide-timeline" /> Gantt</Button>
+          <Button size="sm" variant="ghost" @click="router.push(`/projects/${pid}/board`)">
+            <Icon name="i-lucide-layout-dashboard" /> Board
+          </Button>
+          <Button size="sm" variant="ghost" @click="router.push(`/projects/${pid}/gantt`)">
+            <Icon name="i-lucide-timeline" /> Gantt
+          </Button>
         </div>
       </div>
     </div>
@@ -171,25 +183,43 @@ const projectMembers = computed(() => members.value.filter(m => (project.value?.
           <CardContent class="space-y-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <div class="text-xs text-muted-foreground">Tasks</div>
-                <div class="text-xl font-semibold">{{ summary.total }}</div>
+                <div class="text-xs text-muted-foreground">
+                  Tasks
+                </div>
+                <div class="text-xl font-semibold">
+                  {{ summary.total }}
+                </div>
               </div>
               <div>
-                <div class="text-xs text-muted-foreground">Done</div>
-                <div class="text-xl font-semibold">{{ summary.done }}</div>
+                <div class="text-xs text-muted-foreground">
+                  Done
+                </div>
+                <div class="text-xl font-semibold">
+                  {{ summary.done }}
+                </div>
               </div>
               <div>
-                <div class="text-xs text-muted-foreground">Completion</div>
-                <div class="text-xl font-semibold">{{ summary.percent }}%</div>
+                <div class="text-xs text-muted-foreground">
+                  Completion
+                </div>
+                <div class="text-xl font-semibold">
+                  {{ summary.percent }}%
+                </div>
               </div>
               <div>
-                <div class="text-xs text-muted-foreground">Boards</div>
-                <div class="text-xl font-semibold">{{ (project?.boards || ['Board']).length }}</div>
+                <div class="text-xs text-muted-foreground">
+                  Boards
+                </div>
+                <div class="text-xl font-semibold">
+                  {{ (project?.boards || ['Board']).length }}
+                </div>
               </div>
             </div>
 
             <div v-if="summary.byStatus.length" class="flex flex-wrap gap-2">
-              <Badge v-for="s in summary.byStatus" :key="s.key" variant="outline">{{ s.title }}: {{ s.count }}</Badge>
+              <Badge v-for="s in summary.byStatus" :key="s.key" variant="outline">
+                {{ s.title }}: {{ s.count }}
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -199,15 +229,21 @@ const projectMembers = computed(() => members.value.filter(m => (project.value?.
             <CardTitle>Details</CardTitle>
           </CardHeader>
           <CardContent class="space-y-3">
-            <div class="text-sm"><span class="text-muted-foreground">Created:</span> {{ project ? new Date(project.createdAt).toLocaleString() : '' }}</div>
-            <div class="text-sm" v-if="lead"><span class="text-muted-foreground">Lead:</span> {{ lead?.name }}</div>
-            <div class="text-sm" v-if="projectMembers.length">
+            <div class="text-sm">
+              <span class="text-muted-foreground">Created:</span> {{ project ? new Date(project.createdAt).toLocaleString() : '' }}
+            </div>
+            <div v-if="lead" class="text-sm">
+              <span class="text-muted-foreground">Lead:</span> {{ lead?.name }}
+            </div>
+            <div v-if="projectMembers.length" class="text-sm">
               <span class="text-muted-foreground">Members:</span>
               <span> {{ projectMembers.map(m => m.name).join(', ') }}</span>
             </div>
           </CardContent>
           <CardFooter class="flex gap-2">
-            <Button size="sm" variant="secondary" @click="router.push(`/projects/${pid}/board`)"><Icon name="i-lucide-pencil" /> Manage Tasks</Button>
+            <Button size="sm" variant="secondary" @click="router.push(`/projects/${pid}/board`)">
+              <Icon name="i-lucide-pencil" /> Manage Tasks
+            </Button>
           </CardFooter>
         </Card>
       </div>
@@ -219,15 +255,25 @@ const projectMembers = computed(() => members.value.filter(m => (project.value?.
           <CardDescription>All tasks across boards with their current status</CardDescription>
         </CardHeader>
         <CardContent>
-          <div v-if="summary.tasks.length === 0" class="text-sm text-muted-foreground py-6">No tasks yet. Use the Board to add tasks.</div>
+          <div v-if="summary.tasks.length === 0" class="text-sm text-muted-foreground py-6">
+            No tasks yet. Use the Board to add tasks.
+          </div>
           <div v-else class="divide-y">
             <div v-for="t in summary.tasks" :key="`${t.board}:${t.id}`" class="py-3 flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <div class="font-medium truncate">{{ t.title }}</div>
-                <div class="text-xs text-muted-foreground truncate" v-if="t.description">{{ t.description }}</div>
-                <div class="text-xs text-muted-foreground">{{ t.id }} • {{ t.board }} • {{ t.createdAt || '' }}</div>
+                <div class="font-medium truncate">
+                  {{ t.title }}
+                </div>
+                <div v-if="t.description" class="text-xs text-muted-foreground truncate">
+                  {{ t.description }}
+                </div>
+                <div class="text-xs text-muted-foreground">
+                  {{ t.id }} • {{ t.board }} • {{ t.createdAt || '' }}
+                </div>
               </div>
-              <Badge variant="secondary">{{ t.columnTitle }}</Badge>
+              <Badge variant="secondary">
+                {{ t.columnTitle }}
+              </Badge>
             </div>
           </div>
         </CardContent>

@@ -52,7 +52,9 @@ onMounted(() => {
 <template>
   <div class="w-full flex flex-col gap-4">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-2xl font-bold tracking-tight">Projects</h2>
+      <h2 class="text-2xl font-bold tracking-tight">
+        Projects
+      </h2>
       <div class="flex items-center space-x-2">
         <Sheet v-model:open="open">
           <SheetTrigger as-child>
@@ -76,7 +78,9 @@ onMounted(() => {
               <div class="space-y-2">
                 <Label for="pkey">Key</Label>
                 <Input id="pkey" v-model="form.key" placeholder="WEB" />
-                <p class="text-xs text-muted-foreground">Short code used for task keys.</p>
+                <p class="text-xs text-muted-foreground">
+                  Short code used for task keys.
+                </p>
               </div>
               <div class="space-y-2">
                 <Label for="pcustomer">Customer / Company</Label>
@@ -94,7 +98,9 @@ onMounted(() => {
                       <SelectValue placeholder="Select lead" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}</SelectItem>
+                      <SelectItem v-for="m in members" :key="m.id" :value="m.id">
+                        {{ m.name }}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -109,8 +115,12 @@ onMounted(() => {
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button :disabled="!form.name.trim()" @click="handleCreate">Create Project</Button>
-                <Button variant="secondary" @click="open = false">Cancel</Button>
+                <Button :disabled="!form.name.trim()" @click="handleCreate">
+                  Create Project
+                </Button>
+                <Button variant="secondary" @click="open = false">
+                  Cancel
+                </Button>
               </div>
             </div>
           </SheetContent>
@@ -124,13 +134,21 @@ onMounted(() => {
           <CardHeader>
             <CardTitle class="flex items-center justify-between">
               <span>{{ p.name }}</span>
-              <Badge variant="secondary">{{ p.key }}</Badge>
+              <Badge variant="secondary">
+                {{ p.key }}
+              </Badge>
             </CardTitle>
-            <div v-if="p.customerName" class="text-sm text-muted-foreground">Customer: {{ p.customerName }}</div>
-            <CardDescription class="line-clamp-2">{{ p.description }}</CardDescription>
+            <div v-if="p.customerName" class="text-sm text-muted-foreground">
+              Customer: {{ p.customerName }}
+            </div>
+            <CardDescription class="line-clamp-2">
+              {{ p.description }}
+            </CardDescription>
           </CardHeader>
           <CardFooter class="flex items-center justify-between">
-            <div class="text-xs text-muted-foreground">Created {{ new Date(p.createdAt).toLocaleDateString() }}</div>
+            <div class="text-xs text-muted-foreground">
+              Created {{ new Date(p.createdAt).toLocaleDateString() }}
+            </div>
             <Button size="sm" variant="destructive" @click.stop="removeProject(p.id)">
               <Icon name="i-lucide-trash-2" />
               Delete

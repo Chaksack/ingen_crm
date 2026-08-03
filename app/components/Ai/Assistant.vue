@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { Bot, Send, Sparkles, User } from 'lucide-vue-next'
+import { computed, nextTick, ref } from 'vue'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Send, Bot, User, Sparkles } from 'lucide-vue-next'
 
 interface Message {
   id: number
@@ -20,8 +20,8 @@ const messages = ref<Message[]>([
     id: 1,
     role: 'assistant',
     content: 'Hello! I\'m your AI assistant. How can I help you today?',
-    timestamp: new Date()
-  }
+    timestamp: new Date(),
+  },
 ])
 
 const userInput = ref('')
@@ -33,11 +33,11 @@ const suggestedPrompts = [
   'Analyze customer credit trends',
   'Generate a financial report',
   'Check pending loan applications',
-  'Summarize recent transactions'
+  'Summarize recent transactions',
 ]
 
 // Scroll to bottom of messages
-const scrollToBottom = async () => {
+async function scrollToBottom() {
   await nextTick()
   if (scrollAreaRef.value) {
     const scrollContainer = scrollAreaRef.value.querySelector('[data-radix-scroll-area-viewport]')
@@ -48,20 +48,21 @@ const scrollToBottom = async () => {
 }
 
 // Handle sending a message
-const sendMessage = async () => {
-  if (!userInput.value.trim() || isLoading.value) return
+async function sendMessage() {
+  if (!userInput.value.trim() || isLoading.value)
+    return
 
   const userMessage: Message = {
     id: Date.now(),
     role: 'user',
     content: userInput.value,
-    timestamp: new Date()
+    timestamp: new Date(),
   }
 
   messages.value.push(userMessage)
   const query = userInput.value
   userInput.value = ''
-  
+
   scrollToBottom()
 
   // Show loading state
@@ -75,34 +76,36 @@ const sendMessage = async () => {
       id: Date.now() + 1,
       role: 'assistant',
       content: `I understand you're asking about: "${query}". Here's what I can help you with:\n\n1. I can analyze customer data and credit scores\n2. Generate detailed financial reports\n3. Provide insights on loan applications\n4. Help with data visualization\n\nWhat specific aspect would you like to explore?`,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
 
     messages.value.push(assistantMessage)
     scrollToBottom()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error sending message:', error)
-  } finally {
+  }
+  finally {
     isLoading.value = false
   }
 }
 
 // Handle suggested prompt click
-const useSuggestedPrompt = (prompt: string) => {
+function useSuggestedPrompt(prompt: string) {
   userInput.value = prompt
   sendMessage()
 }
 
 // Format timestamp
-const formatTime = (date: Date) => {
-  return date.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+function formatTime(date: Date) {
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
 // Handle Enter key
-const handleKeyPress = (event: KeyboardEvent) => {
+function handleKeyPress(event: KeyboardEvent) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
     sendMessage()
@@ -118,9 +121,8 @@ const handleKeyPress = (event: KeyboardEvent) => {
         <div
           v-for="message in messages"
           :key="message.id"
-          :class="[
-            'flex gap-3',
-            message.role === 'user' ? 'justify-end' : 'justify-start'
+          class="flex gap-3" :class="[
+            message.role === 'user' ? 'justify-end' : 'justify-start',
           ]"
         >
           <!-- Assistant Avatar -->
@@ -132,14 +134,15 @@ const handleKeyPress = (event: KeyboardEvent) => {
 
           <!-- Message Content -->
           <div
-            :class="[
-              'max-w-[80%] rounded-lg px-4 py-2',
+            class="max-w-[80%] rounded-lg px-4 py-2" :class="[
               message.role === 'user'
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-muted'
+                : 'bg-muted',
             ]"
           >
-            <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+            <p class="text-sm whitespace-pre-wrap">
+              {{ message.content }}
+            </p>
             <span class="text-[10px] opacity-70 mt-1 block">
               {{ formatTime(message.timestamp) }}
             </span>
@@ -162,9 +165,9 @@ const handleKeyPress = (event: KeyboardEvent) => {
           </Avatar>
           <div class="max-w-[80%] rounded-lg px-4 py-3 bg-muted">
             <div class="flex gap-1">
-              <div class="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.3s]"></div>
-              <div class="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.15s]"></div>
-              <div class="w-2 h-2 rounded-full bg-primary/60 animate-bounce"></div>
+              <div class="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.3s]" />
+              <div class="w-2 h-2 rounded-full bg-primary/60 animate-bounce [animation-delay:-0.15s]" />
+              <div class="w-2 h-2 rounded-full bg-primary/60 animate-bounce" />
             </div>
           </div>
         </div>

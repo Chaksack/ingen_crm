@@ -91,7 +91,6 @@ function handleRowClick(row: any) {
             <TableCell
               :colspan="columns.length"
               class="h-24 text-center"
-              
             >
               No results.
             </TableCell>

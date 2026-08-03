@@ -153,7 +153,7 @@ watchEffect(() => {
   const cols = (boardRef as any)?.value?.exposed?.board?.value?.columns
   if (cols) {
     // iterate to depend
-    // eslint-disable-next-line no-unused-expressions
+
     cols.map((c: any) => c.tasks.length)
     recalcOverall()
   }
@@ -168,14 +168,20 @@ watchEffect(() => {
         <Button size="icon" variant="ghost" title="Back" @click="router.push('/projects')">
           <Icon name="i-lucide-arrow-left" />
         </Button>
-        <h2 class="text-xl font-semibold truncate">{{ project?.name || 'Project' }}</h2>
-        <Badge v-if="project?.key" variant="secondary">{{ project?.key }}</Badge>
+        <h2 class="text-xl font-semibold truncate">
+          {{ project?.name || 'Project' }}
+        </h2>
+        <Badge v-if="project?.key" variant="secondary">
+          {{ project?.key }}
+        </Badge>
         <span v-if="project?.customerName" class="text-sm text-muted-foreground truncate">• {{ project?.customerName }}</span>
       </div>
       <div class="flex items-center gap-2">
         <!-- Overall Project Completion -->
         <div v-if="projectCompletion.total > 0" class="hidden sm:flex items-center gap-2 mr-2">
-          <div class="text-xs text-muted-foreground">Project</div>
+          <div class="text-xs text-muted-foreground">
+            Project
+          </div>
           <Badge variant="secondary" class="font-mono">
             {{ projectCompletion.percent }}%
           </Badge>
@@ -183,14 +189,20 @@ watchEffect(() => {
         <div class="flex items-center gap-2">
           <Label class="sr-only">Board</Label>
           <Select v-model="selectedBoard">
-            <SelectTrigger class="w-[160px]"><SelectValue placeholder="Select board" /></SelectTrigger>
+            <SelectTrigger class="w-[160px]">
+              <SelectValue placeholder="Select board" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem v-for="b in (project?.boards || ['Board'])" :key="b" :value="b">{{ b }}</SelectItem>
+              <SelectItem v-for="b in (project?.boards || ['Board'])" :key="b" :value="b">
+                {{ b }}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Dialog>
             <DialogTrigger as-child>
-              <Button size="icon-sm" variant="outline" title="Add board"><Icon name="i-lucide-plus" /></Button>
+              <Button size="icon-sm" variant="outline" title="Add board">
+                <Icon name="i-lucide-plus" />
+              </Button>
             </DialogTrigger>
             <DialogContent class="sm:max-w-[420px]">
               <DialogHeader>
@@ -203,10 +215,14 @@ watchEffect(() => {
                 </div>
                 <div class="flex items-center gap-2">
                   <DialogClose as-child>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">
+                      Cancel
+                    </Button>
                   </DialogClose>
                   <DialogClose as-child>
-                    <Button :disabled="!newBoardName.trim()" @click="createBoard">Create</Button>
+                    <Button :disabled="!newBoardName.trim()" @click="createBoard">
+                      Create
+                    </Button>
                   </DialogClose>
                 </div>
               </div>
@@ -249,7 +265,9 @@ watchEffect(() => {
           <div class="space-y-2">
             <Label for="pkey">Key</Label>
             <Input id="pkey" v-model="form.key" placeholder="KEY" />
-            <p class="text-xs text-muted-foreground">Short uppercase code (max 10 chars). Spaces will be replaced with dashes.</p>
+            <p class="text-xs text-muted-foreground">
+              Short uppercase code (max 10 chars). Spaces will be replaced with dashes.
+            </p>
           </div>
           <div class="space-y-2">
             <Label for="pcustomer">Customer / Company</Label>
@@ -257,8 +275,12 @@ watchEffect(() => {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="secondary" @click="openSettings = false">Cancel</Button>
-          <Button :disabled="!form.name.trim()" @click="saveSettings">Save</Button>
+          <Button variant="secondary" @click="openSettings = false">
+            Cancel
+          </Button>
+          <Button :disabled="!form.name.trim()" @click="saveSettings">
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

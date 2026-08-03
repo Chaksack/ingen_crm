@@ -39,14 +39,14 @@ const currentUser: User = {
 
 const users: Record<string, User> = {
   [currentUser.id]: currentUser,
-  u_1: { id: 'u_1', name: 'IBS Support', avatar: '/avatars/03.png' },
+  u_1: { id: 'u_1', name: 'Ingenicx Support', avatar: '/avatars/03.png' },
   u_2: { id: 'u_2', name: 'Accounting', avatar: '/avatars/02.png' },
 }
 
 const channels = ref<Channel[]>([
   { id: 'c_general', name: 'general', type: 'channel', members: [currentUser.id, 'u_1', 'u_2'] },
   { id: 'c_ops', name: 'ops', type: 'channel', members: [currentUser.id, 'u_2'] },
-  { id: 'dm_u_1', name: 'IBS Support', type: 'dm', members: [currentUser.id, 'u_1'] },
+  { id: 'dm_u_1', name: 'Ingenicx Support', type: 'dm', members: [currentUser.id, 'u_1'] },
 ])
 
 const activeId = ref<string>('c_general')
@@ -365,7 +365,9 @@ function addPeopleToChannel() {
           <div class="flex-1 overflow-y-auto">
             <div class="p-3" :class="isCollapsed ? 'px-1' : ''">
               <div v-if="!isCollapsed" class="flex items-center justify-between mb-2">
-                <p class="text-xs uppercase text-muted-foreground">Channels</p>
+                <p class="text-xs uppercase text-muted-foreground">
+                  Channels
+                </p>
                 <Button size="icon" variant="ghost" class="size-6" @click="openNewChannel = true">
                   <Icon name="i-lucide-plus" />
                 </Button>
@@ -381,7 +383,9 @@ function addPeopleToChannel() {
             </div>
             <div class="p-3" :class="isCollapsed ? 'px-1' : ''">
               <div v-if="!isCollapsed" class="flex items-center justify-between mb-2">
-                <p class="text-xs uppercase text-muted-foreground">Direct messages</p>
+                <p class="text-xs uppercase text-muted-foreground">
+                  Direct messages
+                </p>
                 <Button size="icon" variant="ghost" class="size-6" @click="openDmDialog = true">
                   <Icon name="i-lucide-plus" />
                 </Button>
@@ -412,9 +416,11 @@ function addPeopleToChannel() {
         <div class="flex h-full min-h-0 flex-col overflow-hidden">
           <div class="flex h-[56px] items-center gap-2 border-b px-4 justify-between">
             <div class="flex items-center gap-2 min-w-0">
-              <Icon name="i-lucide-hash" v-if="activeChannel?.type === 'channel'" />
-              <Icon name="i-lucide-message-circle" v-else />
-              <h2 class="text-xl font-semibold truncate">{{ activeChannel?.type === 'channel' ? `#${activeChannel?.name}` : (activeChannel ? dmDisplay(activeChannel) : '') }}</h2>
+              <Icon v-if="activeChannel?.type === 'channel'" name="i-lucide-hash" />
+              <Icon v-else name="i-lucide-message-circle" />
+              <h2 class="text-xl font-semibold truncate">
+                {{ activeChannel?.type === 'channel' ? `#${activeChannel?.name}` : (activeChannel ? dmDisplay(activeChannel) : '') }}
+              </h2>
             </div>
             <div class="flex items-center gap-2">
               <Button v-if="activeChannel?.type === 'channel'" variant="ghost" size="sm" @click="openAddPeople = true">
@@ -435,11 +441,13 @@ function addPeopleToChannel() {
                     <span class="font-medium">{{ users[m.userId]?.name || 'Unknown' }}</span>
                     <span class="text-xs text-muted-foreground">{{ formatTime(m.createdAt) }}</span>
                   </div>
-                  <p v-if="m.text" class="whitespace-pre-wrap break-words">{{ m.text }}</p>
+                  <p v-if="m.text" class="whitespace-pre-wrap break-words">
+                    {{ m.text }}
+                  </p>
                   <div v-if="m.attachments && m.attachments.length" class="mt-2 flex flex-wrap gap-2">
                     <template v-for="att in m.attachments" :key="att.id">
                       <div v-if="att.isImage && att.url" class="overflow-hidden rounded border bg-muted/20">
-                        <img :src="att.url" :alt="att.name" class="max-h-40 object-contain" />
+                        <img :src="att.url" :alt="att.name" class="max-h-40 object-contain">
                       </div>
                       <div v-else class="flex items-center gap-2 rounded border px-2 py-1 text-sm">
                         <Icon name="i-lucide-paperclip" class="text-muted-foreground" />
@@ -459,18 +467,18 @@ function addPeopleToChannel() {
                 <!-- attachment previews -->
                 <div v-if="composerAttachments.length" class="mb-2 flex flex-wrap gap-2">
                   <div v-for="att in composerAttachments" :key="att.id" class="group relative rounded border">
-                    <img v-if="att.isImage && att.url" :src="att.url" :alt="att.name" class="max-h-24 object-contain rounded" />
+                    <img v-if="att.isImage && att.url" :src="att.url" :alt="att.name" class="max-h-24 object-contain rounded">
                     <div v-else class="flex items-center gap-2 px-2 py-1 text-sm">
                       <Icon name="i-lucide-paperclip" class="text-muted-foreground" />
                       <span class="truncate max-w-[160px]">{{ att.name }}</span>
                     </div>
-                    <button class="absolute right-1 top-1 hidden rounded bg-black/60 p-1 text-white group-hover:block" @click="removeAttachment(att.id)" aria-label="Remove attachment">
+                    <button class="absolute right-1 top-1 hidden rounded bg-black/60 p-1 text-white group-hover:block" aria-label="Remove attachment" @click="removeAttachment(att.id)">
                       <Icon name="i-lucide-x" class="size-3" />
                     </button>
                   </div>
                 </div>
                 <div class="flex items-end gap-2">
-                  <Button variant="ghost" size="icon" class="mb-1" @click="fileInput?.click()" title="Add file">
+                  <Button variant="ghost" size="icon" class="mb-1" title="Add file" @click="fileInput?.click()">
                     <Icon name="i-lucide-plus" />
                   </Button>
                   <Textarea
@@ -478,27 +486,31 @@ function addPeopleToChannel() {
                     v-model="draft"
                     class="max-h-[200px] w-full resize-none border-0 p-0 focus-visible:ring-0"
                     placeholder="Message #{{ activeChannel?.name }}"
+                    rows="1"
                     @keydown="handleKeydown"
                     @input="autoResize"
-                    rows="1"
                   />
                   <div class="relative mb-1">
-                    <Button variant="ghost" size="icon" @click="showEmoji = !showEmoji" title="Emoji">
+                    <Button variant="ghost" size="icon" title="Emoji" @click="showEmoji = !showEmoji">
                       <Icon name="i-lucide-smile" />
                     </Button>
                     <div v-if="showEmoji" class="absolute bottom-10 right-0 z-20 w-60 rounded-md border bg-popover p-2 shadow-md">
                       <div class="grid grid-cols-8 gap-1 text-xl">
-                        <button v-for="e in ['😀', '😁', '😂', '😊', '😍', '😎', '🤔', '🙌', '👍', '🎉', '🔥', '✨', '💯', '🙏', '😅', '😉', '🥳', '😇', '🤖', '🧠', '📝', '📎', '✅', '❗']" :key="e" class="rounded hover:bg-muted" @click="insertEmoji(e); showEmoji = false">{{ e }}</button>
+                        <button v-for="e in ['😀', '😁', '😂', '😊', '😍', '😎', '🤔', '🙌', '👍', '🎉', '🔥', '✨', '💯', '🙏', '😅', '😉', '🥳', '😇', '🤖', '🧠', '📝', '📎', '✅', '❗']" :key="e" class="rounded hover:bg-muted" @click="insertEmoji(e); showEmoji = false">
+                          {{ e }}
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <Button :disabled="!draft.trim() && composerAttachments.length === 0" @click="send" class="mb-1">
+                  <Button :disabled="!draft.trim() && composerAttachments.length === 0" class="mb-1" @click="send">
                     <Icon name="i-lucide-send" class="mr-1" /> Send
                   </Button>
-                  <input ref="fileInput" type="file" class="hidden" multiple @change="onFilesSelected" />
+                  <input ref="fileInput" type="file" class="hidden" multiple @change="onFilesSelected">
                 </div>
               </div>
-              <p class="text-[11px] text-muted-foreground mt-1">Enter to send • Shift+Enter for new line • Use + to add files</p>
+              <p class="text-[11px] text-muted-foreground mt-1">
+                Enter to send • Shift+Enter for new line • Use + to add files
+              </p>
             </div>
           </section>
           <!-- Panel Footer (separate from the sticky composer) -->
@@ -536,7 +548,9 @@ function addPeopleToChannel() {
         </div>
         <DialogFooter class="px-4 pb-4">
           <DialogClose as-child>
-            <Button variant="outline">Close</Button>
+            <Button variant="outline">
+              Close
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -570,9 +584,13 @@ function addPeopleToChannel() {
         </div>
         <DialogFooter>
           <DialogClose as-child>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">
+              Cancel
+            </Button>
           </DialogClose>
-          <Button :disabled="!newChannelName.trim()" @click="createChannel">Create</Button>
+          <Button :disabled="!newChannelName.trim()" @click="createChannel">
+            Create
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -596,9 +614,13 @@ function addPeopleToChannel() {
         </div>
         <DialogFooter>
           <DialogClose as-child>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">
+              Cancel
+            </Button>
           </DialogClose>
-          <Button @click="addPeopleToChannel">Add</Button>
+          <Button @click="addPeopleToChannel">
+            Add
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
