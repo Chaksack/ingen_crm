@@ -8,7 +8,6 @@ interface Expense {
   paymentMethod: string
   status: string
   receiptUrl?: string | null
-  vendor?: { vendorName: string } | null
 }
 
 const { data: expensesData, pending: isLoading, refresh } = useFetch<Expense[]>('/api/expenses')
@@ -23,7 +22,6 @@ defineExpose({ refresh })
       <TableHeader>
         <TableRow>
           <TableHead>Category</TableHead>
-          <TableHead>Vendor</TableHead>
           <TableHead>Amount</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Method</TableHead>
@@ -32,7 +30,7 @@ defineExpose({ refresh })
       </TableHeader>
       <TableBody v-if="isLoading">
         <TableRow v-for="i in 5" :key="`skeleton-${i}`">
-          <TableCell colspan="6">
+          <TableCell colspan="5">
             <Skeleton class="h-6 w-full" />
           </TableCell>
         </TableRow>
@@ -40,7 +38,6 @@ defineExpose({ refresh })
       <TableBody v-else>
         <TableRow v-for="expense in expenses" :key="expense.id">
           <TableCell>{{ expense.category }}</TableCell>
-          <TableCell>{{ expense.vendor?.vendorName || '-' }}</TableCell>
           <TableCell>{{ Number(expense.amount).toFixed(2) }} {{ expense.currency }}</TableCell>
           <TableCell>{{ expense.expenseDate }}</TableCell>
           <TableCell>{{ expense.paymentMethod }}</TableCell>
@@ -52,7 +49,7 @@ defineExpose({ refresh })
           </TableCell>
         </TableRow>
         <TableRow v-if="expenses.length === 0">
-          <TableCell colspan="6" class="text-center text-muted-foreground">
+          <TableCell colspan="5" class="text-center text-muted-foreground">
             No expenses recorded yet.
           </TableCell>
         </TableRow>

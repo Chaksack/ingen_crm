@@ -10,11 +10,9 @@ const route = useRoute()
 
 const sidebarNavItems: Item[] = [
   { title: 'Overview', href: '/finance' },
-  { title: 'Invoices', href: '/finance/invoices' },
-  { title: 'Quotations', href: '/finance/quotations' },
+  { title: 'Documents', href: '/finance/documents' },
   { title: 'Payments', href: '/finance/payments' },
   { title: 'Expenses', href: '/finance/expenses' },
-  { title: 'Financial Institutions', href: '/finance/institutions' },
   { title: 'Tax Settings', href: '/finance/tax-settings' },
 ]
 </script>

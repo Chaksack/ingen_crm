@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Search } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { toast } from 'vue-sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,10 +18,13 @@ interface StaffItem {
   role: 'Staff' | 'Manager' | 'Admin'
   department?: string
   status: 'active' | 'inactive'
+  loginStatus: 'pending' | 'active' | 'inactive' | null
 }
 
 const { data: staffData, pending: isLoading, refresh } = useFetch<StaffItem[]>('/api/staff')
 const staff = computed(() => staffData.value ?? [])
+const { user: authUser } = useAuth()
+const isAdmin = computed(() => authUser.value?.role === 'admin')
 
 const searchQuery = ref('')
 const roleFilter = ref<'all' | 'Staff' | 'Manager' | 'Admin'>('all')
@@ -53,6 +57,64 @@ const selected = ref<StaffItem | null>(null)
 function openDetails(item: StaffItem) {
   selected.value = item
   open.value = true
+}
+
+function loginStatusLabel(status: StaffItem['loginStatus']) {
+  switch (status) {
+    case 'active': return 'Active login'
+    case 'pending': return 'Invite pending'
+    case 'inactive': return 'Access revoked'
+    default: return 'No login'
+  }
+}
+
+function loginStatusVariant(status: StaffItem['loginStatus']) {
+  switch (status) {
+    case 'active': return 'default'
+    case 'pending': return 'secondary'
+    case 'inactive': return 'destructive'
+    default: return 'outline'
+  }
+}
+
+const isResending = ref(false)
+async function resendInvite(item: StaffItem) {
+  isResending.value = true
+  try {
+    const result = await $fetch<{ inviteEmailSent: boolean, inviteLink: string | null }>(`/api/staff/${item.id}/resend-invite`, { method: 'POST' })
+    if (result.inviteEmailSent) {
+      toast.success('Invite email resent')
+    }
+    else {
+      toast.warning('Could not send the invite email. Share this link with them directly:', {
+        description: result.inviteLink ?? undefined,
+        duration: 15000,
+      })
+    }
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Failed to resend invite')
+  }
+  finally {
+    isResending.value = false
+  }
+}
+
+const isDeleting = ref(false)
+async function deleteStaff(item: StaffItem) {
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/staff/${item.id}`, { method: 'DELETE' })
+    toast.success('Staff member deleted')
+    open.value = false
+    await refresh()
+  }
+  catch (err: any) {
+    toast.error(err?.data?.statusMessage || 'Failed to delete staff member')
+  }
+  finally {
+    isDeleting.value = false
+  }
 }
 
 defineExpose({ refresh })
@@ -233,10 +295,53 @@ defineExpose({ refresh })
             </div>
           </div>
 
+          <div v-if="isAdmin" class="rounded-md border p-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-muted-foreground">
+                  System Login
+                </div>
+                <Badge :variant="loginStatusVariant(selected?.loginStatus ?? null)" class="mt-1">
+                  {{ loginStatusLabel(selected?.loginStatus ?? null) }}
+                </Badge>
+              </div>
+              <Button
+                v-if="selected?.loginStatus === 'pending'"
+                size="sm"
+                variant="outline"
+                :disabled="isResending"
+                @click="selected && resendInvite(selected)"
+              >
+                Resend Invite
+              </Button>
+            </div>
+          </div>
+
           <div class="pt-2 flex items-center gap-2">
             <Button variant="secondary" @click="open = false">
               Close
             </Button>
+            <AlertDialog v-if="isAdmin">
+              <AlertDialogTrigger as-child>
+                <Button variant="destructive" :disabled="isDeleting">
+                  Delete Staff Member
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {{ selected?.firstName }} {{ selected?.lastName }}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This removes their staff record. If they have system login access, it will be revoked immediately. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction @click="selected && deleteStaff(selected)">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </SheetContent>

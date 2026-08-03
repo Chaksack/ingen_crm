@@ -12,6 +12,7 @@ const bodySchema = z.object({
   description: z.string().min(1),
   category: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  preferredContact: z.enum(['chat', 'email']).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -19,6 +20,9 @@ export default defineEventHandler(async (event) => {
 
   const matchedClient = await db.query.clients.findFirst({ where: eq(clients.email, body.email) })
   const ticketNumber = await nextDocumentNumber('TKT')
+  // Always issued, not just for chat-preferring customers: lets a support agent hand an
+  // email-first customer a chat link later without re-authenticating them.
+  const accessToken = generateToken()
 
   const [ticket] = await db.insert(supportTickets).values({
     ticketNumber,
@@ -30,8 +34,15 @@ export default defineEventHandler(async (event) => {
     description: body.description,
     category: body.category,
     priority: body.priority ?? 'medium',
+    preferredContact: body.preferredContact ?? 'email',
+    accessToken,
     clientId: matchedClient?.id,
   }).returning()
 
-  return { ticketNumber: ticket.ticketNumber, id: ticket.id }
+  return {
+    ticketNumber: ticket.ticketNumber,
+    id: ticket.id,
+    preferredContact: ticket.preferredContact,
+    accessToken: ticket.accessToken,
+  }
 })

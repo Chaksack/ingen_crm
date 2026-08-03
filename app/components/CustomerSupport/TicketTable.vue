@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search } from 'lucide-vue-next'
+import { Mail, MessageCircle, Search } from 'lucide-vue-next'
 
 interface Ticket {
   id: string
@@ -10,6 +10,7 @@ interface Ticket {
   subject: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  preferredContact: 'chat' | 'email'
   createdAt: string
   client?: { name: string } | null
 }
@@ -122,6 +123,7 @@ defineExpose({ refresh })
             <TableHead>Ticket #</TableHead>
             <TableHead>Subject</TableHead>
             <TableHead>Requester</TableHead>
+            <TableHead>Channel</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created</TableHead>
@@ -129,7 +131,7 @@ defineExpose({ refresh })
         </TableHeader>
         <TableBody v-if="isLoading">
           <TableRow v-for="i in 5" :key="`skeleton-${i}`">
-            <TableCell colspan="6">
+            <TableCell colspan="7">
               <Skeleton class="h-6 w-full" />
             </TableCell>
           </TableRow>
@@ -154,6 +156,13 @@ defineExpose({ refresh })
               </div>
             </TableCell>
             <TableCell>
+              <Badge variant="outline" class="gap-1">
+                <MessageCircle v-if="ticket.preferredContact === 'chat'" class="h-3 w-3" />
+                <Mail v-else class="h-3 w-3" />
+                {{ ticket.preferredContact === 'chat' ? 'Chat' : 'Email' }}
+              </Badge>
+            </TableCell>
+            <TableCell>
               <Badge :variant="priorityVariant(ticket.priority)">
                 {{ ticket.priority }}
               </Badge>
@@ -168,7 +177,7 @@ defineExpose({ refresh })
             </TableCell>
           </TableRow>
           <TableRow v-if="filtered.length === 0">
-            <TableCell colspan="6" class="text-center text-muted-foreground">
+            <TableCell colspan="7" class="text-center text-muted-foreground">
               No support tickets yet.
             </TableCell>
           </TableRow>

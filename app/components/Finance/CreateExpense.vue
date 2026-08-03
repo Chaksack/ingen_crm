@@ -2,20 +2,12 @@
 import { Loader2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 
-interface VendorOption {
-  id: string
-  vendorName: string
-}
-
 const emit = defineEmits<{ created: [] }>()
-
-const { data: vendors } = await useFetch<VendorOption[]>('/api/vendors')
 
 const isLoading = ref(false)
 const receiptFile = ref<File | null>(null)
 const form = reactive({
   category: '',
-  vendorId: '',
   amount: 0,
   currency: 'GHS',
   expenseDate: new Date().toISOString().slice(0, 10),
@@ -49,7 +41,6 @@ async function onSubmit(event: Event) {
       method: 'POST',
       body: {
         ...form,
-        vendorId: form.vendorId || undefined,
         receiptUrl,
       },
     })
@@ -70,19 +61,6 @@ async function onSubmit(event: Event) {
     <div class="grid gap-2">
       <Label for="category">Category</Label>
       <Input id="category" v-model="form.category" placeholder="e.g. Office Supplies" :disabled="isLoading" />
-    </div>
-    <div class="grid gap-2">
-      <Label for="vendorId">Vendor (optional)</Label>
-      <Select v-model="form.vendorId">
-        <SelectTrigger id="vendorId" class="w-full">
-          <SelectValue placeholder="Select a vendor" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
-            {{ vendor.vendorName }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
     </div>
     <div class="grid grid-cols-2 gap-4">
       <div class="grid gap-2">

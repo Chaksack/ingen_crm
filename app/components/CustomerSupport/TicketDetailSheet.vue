@@ -22,6 +22,7 @@ interface TicketDetail {
   category?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  preferredContact: 'chat' | 'email'
   createdAt: string
   messages: Message[]
 }
@@ -34,16 +35,19 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const isSending = ref(false)
 const replyBody = ref('')
+let pollHandle: ReturnType<typeof setInterval> | undefined
 
-async function loadTicket() {
+async function loadTicket({ silent = false } = {}) {
   if (!props.ticketId)
     return
-  isLoading.value = true
+  if (!silent)
+    isLoading.value = true
   try {
     ticket.value = await $fetch<TicketDetail>(`/api/support/tickets/${props.ticketId}`)
   }
   catch {
-    toast.error('Failed to load ticket')
+    if (!silent)
+      toast.error('Failed to load ticket')
   }
   finally {
     isLoading.value = false
@@ -51,9 +55,16 @@ async function loadTicket() {
 }
 
 watch(() => [props.ticketId, props.open], ([id, open]) => {
-  if (id && open)
+  clearInterval(pollHandle)
+  if (id && open) {
     loadTicket()
+    // Poll while the sheet is open so a customer's chat replies show up without
+    // the staff member needing to close and reopen the ticket.
+    pollHandle = setInterval(() => loadTicket({ silent: true }), 5000)
+  }
 }, { immediate: true })
+
+onUnmounted(() => clearInterval(pollHandle))
 
 async function updateField(patch: Record<string, unknown>) {
   if (!ticket.value)
@@ -100,7 +111,13 @@ async function sendReply() {
   <Sheet :open="open" @update:open="(v) => emit('update:open', v)">
     <SheetContent side="right" class="w-full sm:max-w-xl overflow-y-auto">
       <SheetHeader>
-        <SheetTitle>{{ ticket?.ticketNumber || 'Ticket' }}</SheetTitle>
+        <div class="flex items-center gap-2">
+          <SheetTitle>{{ ticket?.ticketNumber || 'Ticket' }}</SheetTitle>
+          <Badge v-if="ticket" variant="outline" class="gap-1">
+            <Icon :name="ticket.preferredContact === 'chat' ? 'i-lucide-message-circle' : 'i-lucide-mail'" class="h-3 w-3" />
+            {{ ticket.preferredContact === 'chat' ? 'Chat' : 'Email' }}
+          </Badge>
+        </div>
         <SheetDescription>{{ ticket?.subject }}</SheetDescription>
       </SheetHeader>
 

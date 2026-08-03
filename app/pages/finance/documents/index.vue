@@ -12,26 +12,26 @@ function onCreated() {
   <FinanceLayout>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h3 class="text-lg font-medium">
-        Financial Institutions
+        Documents
       </h3>
       <Sheet v-model:open="isSheetOpen">
         <SheetTrigger as-child>
           <Button>
             <Icon name="i-lucide-plus" />
-            New Financial Institution
+            New Document
           </Button>
         </SheetTrigger>
         <SheetContent class="w-1/2 rounded-l-lg sm:max-w-none overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Create New Financial Institution</SheetTitle>
+            <SheetTitle>Create New Document</SheetTitle>
             <SheetDescription>
-              Fill in the details to create a new financial institution.
+              Choose a type, add line items, and generate an invoice or quotation.
             </SheetDescription>
           </SheetHeader>
-          <FICreateFinancialInstitution @created="onCreated" />
+          <FinanceCreateDocument @created="onCreated" />
         </SheetContent>
       </Sheet>
     </div>
-    <FIFinancialInstitutionTable ref="table" />
+    <FinanceDocumentTable ref="table" />
   </FinanceLayout>
 </template>

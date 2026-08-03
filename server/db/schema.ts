@@ -92,75 +92,6 @@ export const clientMomoAccounts = pgTable('client_momo_accounts', {
   ...timestamps(),
 })
 
-// ---------- Vendors ----------
-
-export const vendors = pgTable('vendors', {
-  id: id(),
-  vendorName: text('vendor_name').notNull(),
-  email: text('email').notNull().unique(),
-  phone: text('phone'),
-  address: text('address'),
-  website: text('website'),
-  avatar: text('avatar'),
-  vendorType: text('vendor_type'),
-  registrationNumber: text('registration_number'),
-  foundedDate: text('founded_date'),
-  country: text('country'),
-  services: text('services'),
-  description: text('description'),
-  status: text('status', { enum: ['active', 'inactive', 'pending'] }).notNull().default('pending'),
-  ...timestamps(),
-})
-
-// ---------- Financial Institutions ----------
-
-export const financialInstitutions = pgTable('financial_institutions', {
-  id: id(),
-  institutionName: text('institution_name').notNull(),
-  email: text('email').notNull().unique(),
-  phone: text('phone'),
-  address: text('address'),
-  website: text('website'),
-  avatar: text('avatar'),
-  institutionType: text('institution_type'),
-  registrationNumber: text('registration_number'),
-  foundedDate: text('founded_date'),
-  country: text('country'),
-  services: text('services'),
-  description: text('description'),
-  status: text('status', { enum: ['active', 'inactive', 'pending'] }).notNull().default('pending'),
-  ...timestamps(),
-})
-
-// ---------- Businesses / Companies ----------
-
-export const businesses = pgTable('businesses', {
-  id: id(),
-  companyName: text('company_name').notNull(),
-  companyNumber: text('company_number'),
-  email: text('email').notNull().unique(),
-  phoneNumber: text('phone_number'),
-  address: text('address'),
-  avatar: text('avatar'),
-  capital: decimal('capital', { precision: 14, scale: 2 }),
-  foundedYear: integer('founded_year'),
-  country: text('country'),
-  currency: text('currency').default('GHS'),
-  creditScore: integer('credit_score'),
-  kyc: boolean('kyc').notNull().default(false),
-  status: text('status', { enum: ['active', 'inactive', 'pending'] }).notNull().default('pending'),
-  ...timestamps(),
-})
-
-export const businessBankAccounts = pgTable('business_bank_accounts', {
-  id: id(),
-  businessId: text('business_id').notNull().references(() => businesses.id, { onDelete: 'cascade' }),
-  bankName: text('bank_name').notNull(),
-  accountNumber: text('account_number').notNull(),
-  accountHolder: text('account_holder').notNull(),
-  ...timestamps(),
-})
-
 // ---------- Finance: Invoices ----------
 
 export const invoiceStatusValues = ['draft', 'sent', 'partially_paid', 'paid', 'overdue', 'void'] as const
@@ -269,7 +200,6 @@ export const payments = pgTable('payments', {
 export const expenses = pgTable('expenses', {
   id: id(),
   category: text('category').notNull(),
-  vendorId: text('vendor_id').references(() => vendors.id, { onDelete: 'set null' }),
   amount: decimal('amount', { precision: 14, scale: 2 }).notNull(),
   currency: text('currency').notNull().default('GHS'),
   expenseDate: text('expense_date').notNull(),
@@ -285,6 +215,7 @@ export const expenses = pgTable('expenses', {
 
 export const supportTicketStatusValues = ['open', 'in_progress', 'resolved', 'closed'] as const
 export const supportTicketPriorityValues = ['low', 'medium', 'high', 'urgent'] as const
+export const supportTicketContactValues = ['chat', 'email'] as const
 
 export const supportTickets = pgTable('support_tickets', {
   id: id(),
@@ -298,6 +229,10 @@ export const supportTickets = pgTable('support_tickets', {
   category: text('category'),
   priority: text('priority', { enum: supportTicketPriorityValues }).notNull().default('medium'),
   status: text('status', { enum: supportTicketStatusValues }).notNull().default('open'),
+  preferredContact: text('preferred_contact', { enum: supportTicketContactValues }).notNull().default('email'),
+  // Nullable + unique: lets an anonymous customer authenticate to their own ticket's chat
+  // thread via a link, without requiring a full account. Older (pre-chat) tickets have none.
+  accessToken: text('access_token').unique(),
   clientId: text('client_id').references(() => clients.id, { onDelete: 'set null' }),
   assignedTo: text('assigned_to').references(() => users.id, { onDelete: 'set null' }),
   ...timestamps(),
@@ -395,12 +330,4 @@ export const supportTicketsRelations = relations(supportTickets, ({ many, one })
 
 export const supportTicketMessagesRelations = relations(supportTicketMessages, ({ one }) => ({
   ticket: one(supportTickets, { fields: [supportTicketMessages.ticketId], references: [supportTickets.id] }),
-}))
-
-export const businessesRelations = relations(businesses, ({ many }) => ({
-  bankAccounts: many(businessBankAccounts),
-}))
-
-export const expensesRelations = relations(expenses, ({ one }) => ({
-  vendor: one(vendors, { fields: [expenses.vendorId], references: [vendors.id] }),
 }))

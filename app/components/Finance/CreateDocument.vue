@@ -12,17 +12,20 @@ const emit = defineEmits<{ created: [] }>()
 const { data: clients } = await useFetch<ClientOption[]>('/api/clients')
 const { activeRates } = useTaxPreview()
 
+const documentType = ref<'invoice' | 'quotation'>('invoice')
 const isLoading = ref(false)
 const form = reactive({
   clientId: '',
   issueDate: new Date().toISOString().slice(0, 10),
-  dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  secondDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
   currency: 'GHS',
   taxExempt: false,
   discount: 0,
   notes: '',
   terms: '',
 })
+
+const secondDateLabel = computed(() => documentType.value === 'invoice' ? 'Due Date' : 'Expiry Date')
 
 const lineItems = ref([{ description: '', quantity: 1, unitPrice: 0 }])
 
@@ -49,17 +52,23 @@ async function onSubmit(event: Event) {
     return
   }
 
+  const isInvoice = documentType.value === 'invoice'
+  const { secondDate, ...rest } = form
+  const body = isInvoice
+    ? { ...rest, dueDate: secondDate, lineItems: items }
+    : { ...rest, expiryDate: secondDate, lineItems: items }
+
   isLoading.value = true
   try {
-    await $fetch('/api/invoices', {
+    await $fetch(isInvoice ? '/api/invoices' : '/api/quotations', {
       method: 'POST',
-      body: { ...form, lineItems: items },
+      body,
     })
-    toast.success('Invoice created')
+    toast.success(isInvoice ? 'Invoice created' : 'Quotation created')
     emit('created')
   }
   catch (err: any) {
-    toast.error(err?.data?.statusMessage || 'Failed to create invoice')
+    toast.error(err?.data?.statusMessage || `Failed to create ${documentType.value}`)
   }
   finally {
     isLoading.value = false
@@ -69,6 +78,23 @@ async function onSubmit(event: Event) {
 
 <template>
   <form class="grid gap-4 px-4" @submit="onSubmit">
+    <div class="grid gap-2">
+      <Label for="documentType">Document Type</Label>
+      <Select v-model="documentType">
+        <SelectTrigger id="documentType" class="w-full">
+          <SelectValue placeholder="Select document type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="invoice">
+            Invoice
+          </SelectItem>
+          <SelectItem value="quotation">
+            Quotation
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
     <div class="grid gap-2">
       <Label for="clientId">Client</Label>
       <Select v-model="form.clientId">
@@ -89,8 +115,8 @@ async function onSubmit(event: Event) {
         <Input id="issueDate" v-model="form.issueDate" type="date" />
       </div>
       <div class="grid gap-2">
-        <Label for="dueDate">Due Date</Label>
-        <Input id="dueDate" v-model="form.dueDate" type="date" />
+        <Label for="secondDate">{{ secondDateLabel }}</Label>
+        <Input id="secondDate" v-model="form.secondDate" type="date" />
       </div>
     </div>
 
@@ -157,7 +183,7 @@ async function onSubmit(event: Event) {
 
     <Button type="submit" :disabled="isLoading" class="mt-2">
       <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
-      Create Invoice
+      {{ documentType === 'invoice' ? 'Create Invoice' : 'Create Quotation' }}
     </Button>
   </form>
 </template>

@@ -1,8 +1,19 @@
-import { desc } from 'drizzle-orm'
+import { desc, isNotNull } from 'drizzle-orm'
 import { db } from '../../db/client'
-import { staff } from '../../db/schema'
+import { staff, users } from '../../db/schema'
 
 export default defineEventHandler(async (event) => {
   await requireUser(event)
-  return db.select().from(staff).orderBy(desc(staff.createdAt))
+
+  const [staffRows, linkedUsers] = await Promise.all([
+    db.select().from(staff).orderBy(desc(staff.createdAt)),
+    db.select({ staffId: users.staffId, status: users.status }).from(users).where(isNotNull(users.staffId)),
+  ])
+
+  const loginStatusByStaffId = new Map(linkedUsers.map(u => [u.staffId, u.status]))
+
+  return staffRows.map(row => ({
+    ...row,
+    loginStatus: loginStatusByStaffId.get(row.id) ?? null,
+  }))
 })

@@ -5,7 +5,7 @@ import { expenses } from '../../db/schema'
 export default defineEventHandler(async (event) => {
   await requireUser(event)
   const id = getRouterParam(event, 'id')!
-  const row = await db.query.expenses.findFirst({ where: eq(expenses.id, id), with: { vendor: true } })
+  const row = await db.query.expenses.findFirst({ where: eq(expenses.id, id) })
   if (!row) {
     throw createError({ statusCode: 404, statusMessage: 'Expense not found' })
   }

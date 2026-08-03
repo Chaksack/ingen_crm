@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2, Mail, MessageCircle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 
 definePageMeta({
   layout: 'blank',
 })
 
+interface ChatSession {
+  id: string
+  accessToken: string
+  ticketNumber: string
+  description: string
+}
+
+const STORAGE_KEY = 'ingenicx-support-chat'
+
 const isLoading = ref(false)
 const submittedTicket = ref<string | null>(null)
+const chatSession = ref<ChatSession | null>(null)
 
 const form = reactive({
   name: '',
@@ -18,7 +28,27 @@ const form = reactive({
   description: '',
   category: '',
   priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+  preferredContact: 'email' as 'chat' | 'email',
 })
+
+onMounted(() => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    try {
+      chatSession.value = JSON.parse(saved)
+    }
+    catch {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  }
+})
+
+function startNewConversation() {
+  localStorage.removeItem(STORAGE_KEY)
+  chatSession.value = null
+  submittedTicket.value = null
+  Object.assign(form, { name: '', email: '', phone: '', company: '', subject: '', description: '', category: '', priority: 'medium', preferredContact: 'email' })
+}
 
 async function onSubmit(event: Event) {
   event.preventDefault()
@@ -29,11 +59,24 @@ async function onSubmit(event: Event) {
 
   isLoading.value = true
   try {
-    const result = await $fetch<{ ticketNumber: string }>('/api/support/tickets', {
+    const result = await $fetch<{ ticketNumber: string, id: string, accessToken: string, preferredContact: 'chat' | 'email' }>('/api/support/tickets', {
       method: 'POST',
       body: form,
     })
-    submittedTicket.value = result.ticketNumber
+
+    if (result.preferredContact === 'chat') {
+      const session: ChatSession = {
+        id: result.id,
+        accessToken: result.accessToken,
+        ticketNumber: result.ticketNumber,
+        description: form.description,
+      }
+      chatSession.value = session
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+    }
+    else {
+      submittedTicket.value = result.ticketNumber
+    }
   }
   catch (err: any) {
     toast.error(err?.data?.statusMessage || 'Failed to submit ticket. Please try again.')
@@ -46,14 +89,23 @@ async function onSubmit(event: Event) {
 
 <template>
   <div class="flex flex-col items-center justify-center gap-6 bg-muted p-6 min-h-svh md:p-10">
-    <div class="max-w-lg w-full flex flex-col gap-6">
+    <div class="w-full flex flex-col gap-6" :class="chatSession ? 'max-w-xl' : 'max-w-lg'">
       <div class="flex items-center self-center gap-2 font-medium">
         <h1 class="font-bold text-2xl">
           Ingenicx
         </h1>
       </div>
 
-      <Card v-if="submittedTicket">
+      <template v-if="chatSession">
+        <CustomerSupportPublicChat
+          :ticket-id="chatSession.id"
+          :access-token="chatSession.accessToken"
+          :description="chatSession.description"
+          @end-chat="startNewConversation"
+        />
+      </template>
+
+      <Card v-else-if="submittedTicket">
         <CardHeader class="text-center">
           <div class="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
             <Icon name="i-lucide-check" class="size-6 text-primary" />
@@ -79,6 +131,32 @@ async function onSubmit(event: Event) {
         </CardHeader>
         <CardContent>
           <form class="grid gap-4" @submit="onSubmit">
+            <div class="grid gap-2">
+              <Label>How would you like to reach us?</Label>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  class="flex flex-col items-center gap-2 rounded-lg border-2 p-4 text-sm transition-colors"
+                  :class="form.preferredContact === 'chat' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'"
+                  @click="form.preferredContact = 'chat'"
+                >
+                  <MessageCircle class="h-5 w-5" />
+                  <span class="font-medium">Live Chat</span>
+                  <span class="text-xs text-muted-foreground text-center">Talk to an agent right now</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex flex-col items-center gap-2 rounded-lg border-2 p-4 text-sm transition-colors"
+                  :class="form.preferredContact === 'email' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'"
+                  @click="form.preferredContact = 'email'"
+                >
+                  <Mail class="h-5 w-5" />
+                  <span class="font-medium">Email</span>
+                  <span class="text-xs text-muted-foreground text-center">We'll follow up by email</span>
+                </button>
+              </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-4">
               <div class="grid gap-2">
                 <Label for="name">Your Name</Label>
@@ -137,7 +215,7 @@ async function onSubmit(event: Event) {
             </div>
             <Button type="submit" class="w-full" :disabled="isLoading">
               <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
-              Submit Ticket
+              {{ form.preferredContact === 'chat' ? 'Start Chat' : 'Submit Ticket' }}
             </Button>
           </form>
         </CardContent>

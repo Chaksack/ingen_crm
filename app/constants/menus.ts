@@ -37,16 +37,6 @@ export const navMenu: NavMenu[] = [
     icon: 'i-lucide-landmark',
     link: '/finance',
   },
-  {
-    title: 'Vendors',
-    icon: 'i-lucide-handshake',
-    link: '/vendor',
-  },
-  {
-    title: 'Companies',
-    icon: 'i-lucide-building-2',
-    link: '/company',
-  },
 ]
 
 export const navMenuBottom: NavMenuItems = [

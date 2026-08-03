@@ -31,30 +31,43 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return db.transaction(async (tx) => {
+  // Insert staff (+ pending login, if requested) first. Email delivery happens after the
+  // transaction commits — a Resend outage should never roll back a successful staff creation.
+  const { staffRow, inviteLink } = await db.transaction(async (tx) => {
     const [staffRow] = await tx.insert(staff).values(staffFields).returning()
 
-    if (createLogin) {
-      const [user] = await tx.insert(users).values({
-        email: body.email,
-        name: `${body.firstName} ${body.lastName}`,
-        role: (body.role ?? 'Staff').toLowerCase() as 'admin' | 'manager' | 'staff',
-        status: 'pending',
-        staffId: staffRow.id,
-      }).returning()
+    if (!createLogin)
+      return { staffRow, inviteLink: null }
 
-      const token = generateToken()
-      await tx.insert(authCodes).values({
-        userId: user.id,
-        code: token,
-        purpose: 'invite',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      })
+    const [user] = await tx.insert(users).values({
+      email: body.email,
+      name: `${body.firstName} ${body.lastName}`,
+      role: (body.role ?? 'Staff').toLowerCase() as 'admin' | 'manager' | 'staff',
+      status: 'pending',
+      staffId: staffRow.id,
+    }).returning()
 
-      const link = `${getRequestURL(event).origin}/accept-invite?token=${token}`
-      await sendStaffInviteEmail(user.email, user.name, link)
-    }
+    const token = generateToken()
+    await tx.insert(authCodes).values({
+      userId: user.id,
+      code: token,
+      purpose: 'invite',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    })
 
-    return staffRow
+    const inviteLink = `${getRequestURL(event).origin}/accept-invite?token=${token}`
+    return { staffRow, inviteLink }
   })
+
+  if (!inviteLink)
+    return { ...staffRow, inviteEmailSent: null, inviteLink: null }
+
+  const inviteEmailSent = await sendStaffInviteEmail(body.email, `${body.firstName} ${body.lastName}`, inviteLink)
+
+  return {
+    ...staffRow,
+    inviteEmailSent,
+    // Only hand back the raw link when the email failed, so the admin can share it manually.
+    inviteLink: inviteEmailSent ? null : inviteLink,
+  }
 })

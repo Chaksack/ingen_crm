@@ -9,7 +9,7 @@
         Finance
       </h2>
       <p class="text-muted-foreground">
-        Manage invoices, quotations, payments, expenses, and financial institutions.
+        Manage invoices, quotations, payments, and expenses.
       </p>
     </div>
     <Separator class="my-6" />

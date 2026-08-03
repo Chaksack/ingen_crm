@@ -6,6 +6,5 @@ export default defineEventHandler(async (event) => {
   await requireUser(event)
   return db.query.expenses.findMany({
     orderBy: desc(expenses.expenseDate),
-    with: { vendor: true },
   })
 })

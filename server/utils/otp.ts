@@ -19,21 +19,35 @@ function getResend() {
   return new Resend(apiKey)
 }
 
-async function sendEmail(to: string, subject: string, html: string, devLabel: string, devValue: string) {
+/**
+ * Sends via Resend when configured; always returns whether the message actually went out
+ * rather than throwing, so a Resend outage/misconfiguration degrades gracefully instead of
+ * failing the whole request (and, for flows inside a DB transaction, rolling it back).
+ */
+async function sendEmail(to: string, subject: string, html: string, devLabel: string, devValue: string): Promise<boolean> {
   const resend = getResend()
   if (!resend) {
     if (!isProd)
       console.warn(`[dev] ${devLabel} for ${to}: ${devValue}`)
-    return
+    return !isProd
   }
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: 'Ingenicx <onboarding@resend.dev>',
       to,
       subject,
       html,
     })
+    if (result.error) {
+      console.error(`Failed to send "${devLabel}" to ${to}:`, result.error)
+      return false
+    }
+    return true
+  }
+  catch (err) {
+    console.error(`Failed to send "${devLabel}" to ${to}:`, err)
+    return false
   }
   finally {
     if (!isProd)
@@ -42,7 +56,7 @@ async function sendEmail(to: string, subject: string, html: string, devLabel: st
 }
 
 export async function sendLoginOtpEmail(to: string, code: string) {
-  await sendEmail(
+  return sendEmail(
     to,
     'Your Ingenicx sign-in code',
     `<p>Your sign-in verification code is:</p><h2>${code}</h2><p>This code expires in 10 minutes.</p>`,
@@ -52,7 +66,7 @@ export async function sendLoginOtpEmail(to: string, code: string) {
 }
 
 export async function sendPasswordResetEmail(to: string, code: string) {
-  await sendEmail(
+  return sendEmail(
     to,
     'Reset your Ingenicx password',
     `<p>Your password reset code is:</p><h2>${code}</h2><p>This code expires in 10 minutes.</p>`,
@@ -62,7 +76,7 @@ export async function sendPasswordResetEmail(to: string, code: string) {
 }
 
 export async function sendStaffInviteEmail(to: string, name: string, link: string) {
-  await sendEmail(
+  return sendEmail(
     to,
     'You\'ve been invited to Ingenicx',
     `<p>Hi ${name},</p><p>You've been added as a staff member on Ingenicx. Click the link below to set your password and activate your account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 7 days.</p>`,

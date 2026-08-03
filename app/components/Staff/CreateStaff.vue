@@ -36,11 +36,20 @@ async function handleSubmit() {
 
   isSubmitting.value = true
   try {
-    await $fetch('/api/staff', {
+    const result = await $fetch<{ inviteEmailSent: boolean | null, inviteLink: string | null }>('/api/staff', {
       method: 'POST',
       body: { ...form.value, createLogin: isAdmin.value && form.value.createLogin },
     })
-    toast.success(isAdmin.value && form.value.createLogin ? 'Staff created and invite sent' : 'Staff created')
+
+    if (result.inviteEmailSent === false) {
+      toast.warning('Staff created, but the invite email could not be sent. Share this link with them directly:', {
+        description: result.inviteLink ?? undefined,
+        duration: 15000,
+      })
+    }
+    else {
+      toast.success(result.inviteEmailSent ? 'Staff created and invite sent' : 'Staff created')
+    }
     emit('created')
   }
   catch (err: any) {

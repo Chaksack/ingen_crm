@@ -5,7 +5,6 @@ import { expenses } from '../../db/schema'
 
 const bodySchema = z.object({
   category: z.string().min(1).optional(),
-  vendorId: z.string().optional(),
   amount: z.number().positive().optional(),
   currency: z.string().optional(),
   expenseDate: z.string().optional(),

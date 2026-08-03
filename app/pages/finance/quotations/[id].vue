@@ -78,7 +78,7 @@ async function convertToInvoice() {
 <template>
   <div class="w-full flex flex-col gap-4">
     <div class="flex items-center gap-4 flex-wrap">
-      <NuxtLink to="/finance/quotations">
+      <NuxtLink to="/finance/documents">
         <Button variant="outline" size="icon" class="h-7 w-7">
           <Icon name="i-lucide-chevron-left" />
         </Button>
